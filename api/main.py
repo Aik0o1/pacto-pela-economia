@@ -24,6 +24,8 @@ ALLOWED_CITIES = [
     "Tanque do Piauí"
 ]
 
+ALLOWED_CITIES_UPPER = [c.upper() for c in ALLOWED_CITIES]
+
 load_dotenv()  # take environment variables
 
 # Database connection setup
@@ -131,7 +133,7 @@ def get_cidades_por_regiao(couch_instance, nome_regiao):
         # Find all city names that belong to this region
         cidades_da_regiao = []
         for city_name, reg_name in regioes_data.items():
-            if reg_name == clean_region:
+            if reg_name == clean_region and city_name.upper() in ALLOWED_CITIES_UPPER:
                 cidades_da_regiao.append(city_name)
                 
         if not cidades_da_regiao:
@@ -280,6 +282,16 @@ def buscar_municipios():
 
         doc = db[doc_id]
 
+        is_state_total = False
+        if cidade == "22" or cidade.lower() == "total" or cidade == "":
+            is_state_total = True
+            allowed_ids = [
+                k for k, v in doc.items()
+                if isinstance(v, dict) and v.get("nome", "").upper() in ALLOWED_CITIES_UPPER
+            ]
+            if allowed_ids:
+                cidade = ",".join(allowed_ids)
+
         # Converte nome de região para string de IDs separados por vírgula
         if cidade.startswith("Território:"):
             cidades_str = get_cidades_por_regiao(couch, cidade)
@@ -300,11 +312,14 @@ def buscar_municipios():
             dados_cidade = doc[cidade]
             dados_processados = processar_dados_cidade(dados_cidade)
 
+        if is_state_total:
+            dados_processados["nome"] = "Piauí"
+
         # Resposta de sucesso - trata tanto códigos IBGE quanto "total"
         return jsonify({
             "id": doc_id, 
-            "municipio": cidade,
-            "tipo": "municipio", 
+            "municipio": "Piauí" if is_state_total else cidade,
+            "tipo": "estado" if is_state_total else "municipio", 
             **dados_processados
         })
     except couchdb.http.Unauthorized:
@@ -392,6 +407,16 @@ def buscar_empresas_abertas():
         
         doc = db[doc_id]
         
+        is_state_total = False
+        if cidade == "22" or cidade.lower() == "total" or cidade == "":
+            is_state_total = True
+            allowed_ids = [
+                k for k, v in doc.items()
+                if isinstance(v, dict) and v.get("nome", "").upper() in ALLOWED_CITIES_UPPER
+            ]
+            if allowed_ids:
+                cidade = ",".join(allowed_ids)
+        
         # Converte nome de região para string de IDs separados por vírgula
         if cidade.startswith("Território:"):
             cidades_str = get_cidades_por_regiao(couch, cidade)
@@ -412,10 +437,13 @@ def buscar_empresas_abertas():
             dados_cidade = doc[cidade]
             dados_processados = processar_dados_cidade(dados_cidade)
         
+        if is_state_total:
+            dados_processados["nome"] = "Piauí"
+
         return jsonify({
             "id": doc_id, 
-            "municipio": cidade,
-            "tipo": "municipio", 
+            "municipio": "Piauí" if is_state_total else cidade,
+            "tipo": "estado" if is_state_total else "municipio", 
             **dados_processados
         })
             
@@ -546,7 +574,7 @@ def buscar_primeiro_ranking():
 
         for codigo_municipio, dados_municipio in doc.items():
             # Ignora campos que não são municípios (como "total" ou outros metadados)
-            if isinstance(dados_municipio, dict) and "ranking" in dados_municipio and dados_municipio.get("nome") in ALLOWED_CITIES:
+            if isinstance(dados_municipio, dict) and "ranking" in dados_municipio and dados_municipio.get("nome", "").upper() in ALLOWED_CITIES_UPPER:
                 ranking = dados_municipio.get("ranking", {})
                 posicao = ranking.get("posicao")
                 
@@ -609,7 +637,7 @@ def buscar_ranking_completo():
             continue  
 
         # Verifica se é um objeto de município válido e se está na lista permitida
-        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"] in ALLOWED_CITIES:
+        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"].upper() in ALLOWED_CITIES_UPPER:
             # Soma as aberturas por porte
             quantidade = sum(valor.get("abertas", {}).get("portes", {}).values())
             ranking.append({
@@ -652,7 +680,7 @@ def buscar_ranking_ativas():
             continue  
 
         # Verifica se é um objeto de município válido e está na lista permitida
-        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"] in ALLOWED_CITIES:
+        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"].upper() in ALLOWED_CITIES_UPPER:
             # Soma o estoque de ATIVAS
             quantidade = sum(valor.get("ativas", {}).get("portes", {}).values())
             
