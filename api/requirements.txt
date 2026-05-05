@@ -1,0 +1,5 @@
+Flask
+couchdb
+gunicorn
+flask-cors
+python-dotenv
