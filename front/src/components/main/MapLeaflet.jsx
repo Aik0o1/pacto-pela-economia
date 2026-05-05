@@ -112,6 +112,21 @@ const MapAutoZoom = ({ cidadeSelecionada, geoJsonData }) => {
     return null;
 }
 
+const ALLOWED_CITIES = [
+    "Betânia do Piauí",
+    "Buriti dos Montes",
+    "Campo Largo do Piauí",
+    "Cocal dos Alves",
+    "Coronel José Dias",
+    "Cristino Castro",
+    "Ipiranga do Piauí",
+    "Jerumenha",
+    "Monsenhor Gil",
+    "São José do Peixe",
+    "São José do Piauí",
+    "Tanque do Piauí"
+];
+
 const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
     const [geoJsonData, setGeoJsonData] = useState(null);
 
@@ -147,14 +162,17 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
                     regiao = "Desconhecido";
                 }
 
+                const isAllowed = ALLOWED_CITIES.includes(nome);
+
                 return {
                     ...feature,
                     properties: {
                         ...feature.properties,
                         name: nome, // Set name from API mapping
                         regiao,
-                        color: regionColors[regiao] || "#CCCCCC", // Grey for unknown
-                        codarea
+                        color: isAllowed ? "#4ade80" : "#1e3a8a", // Lighter green for allowed, Darker blue for blocked
+                        codarea,
+                        isAllowed
                     }
                 };
             });
@@ -205,13 +223,17 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
                         fillColor: feature.properties.color,
                         weight: isSelected ? 3 : 1,
                         opacity: 1,
-                        color: 'black',
+                        color: 'white', // Using white border for better contrast
                         dashArray: '',
-                        fillOpacity: targetIds.length > 0 && !isSelected ? 0.4 : 1
+                        fillOpacity: (targetIds.length > 0 && !isSelected) ? 0.4 : 1 // Full opacity for both green and blue unless something is selected
                     };
                 }}
                 onEachFeature={(feature, layer) => {
-                    const { name, regiao, codarea } = feature.properties;
+                    const { name, regiao, codarea, isAllowed } = feature.properties;
+
+                    if (!isAllowed) {
+                        return; // Do not add interactions to blocked cities
+                    }
 
                     layer.bindTooltip(`
                         <div style="font-family: sans-serif;">
@@ -236,9 +258,6 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
 
                             // Reset style of other layers
                             const parentLayer = layer._layer || layer.options?.parentElement || e.target._eventParents ? Object.values(e.target._eventParents)[0] : null;
-
-                            // We no longer manually clear styles because the React GeoJSON layer 
-                            // will handle it when onCidadeSelecionada triggers a re-render.
 
                             if (onCidadeSelecionada) {
                                 onCidadeSelecionada(cidade);

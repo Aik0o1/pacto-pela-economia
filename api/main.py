@@ -9,6 +9,21 @@ from urllib.parse import quote
 from flask import Flask, jsonify, Response, request
 import unicodedata
 
+ALLOWED_CITIES = [
+    "Betânia do Piauí",
+    "Buriti dos Montes",
+    "Campo Largo do Piauí",
+    "Cocal dos Alves",
+    "Coronel José Dias",
+    "Cristino Castro",
+    "Ipiranga do Piauí",
+    "Jerumenha",
+    "Monsenhor Gil",
+    "São José do Peixe",
+    "São José do Piauí",
+    "Tanque do Piauí"
+]
+
 load_dotenv()  # take environment variables
 
 # Database connection setup
@@ -429,10 +444,11 @@ def get_id_nome_cidades():
         # Formatar os dados no formato desejado
         cidades = []
         for cidade_id, cidade_data in doc["cidades"].items():
-            cidades.append({
-                "id": int(cidade_id),
-                "nome": cidade_data["nome"]
-            })
+            if cidade_data["nome"] in ALLOWED_CITIES:
+                cidades.append({
+                    "id": int(cidade_id),
+                    "nome": cidade_data["nome"]
+                })
         
         # Retornar como JSON com encoding UTF-8
         return Response(
@@ -524,19 +540,20 @@ def buscar_primeiro_ranking():
         doc = db[doc_id]
 
         # Procura pelo município em primeira posição
+        melhor_posicao = float('inf')
         primeiro_municipio = None
         codigo_primeiro = None
-        
+
         for codigo_municipio, dados_municipio in doc.items():
             # Ignora campos que não são municípios (como "total" ou outros metadados)
-            if isinstance(dados_municipio, dict) and "ranking" in dados_municipio:
+            if isinstance(dados_municipio, dict) and "ranking" in dados_municipio and dados_municipio.get("nome") in ALLOWED_CITIES:
                 ranking = dados_municipio.get("ranking", {})
                 posicao = ranking.get("posicao")
                 
-                if posicao == 1:
+                if posicao and posicao < melhor_posicao:
+                    melhor_posicao = posicao
                     primeiro_municipio = dados_municipio
                     codigo_primeiro = codigo_municipio
-                    break
 
         # Verifica se encontrou o primeiro colocado
         if primeiro_municipio is None:
@@ -591,8 +608,8 @@ def buscar_ranking_completo():
             quantidade_total_piaui = sum(valor.get("abertas", {}).get("portes", {}).values())
             continue  
 
-        # Verifica se é um objeto de município válido
-        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí":
+        # Verifica se é um objeto de município válido e se está na lista permitida
+        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"] in ALLOWED_CITIES:
             # Soma as aberturas por porte
             quantidade = sum(valor.get("abertas", {}).get("portes", {}).values())
             ranking.append({
@@ -634,8 +651,8 @@ def buscar_ranking_ativas():
             quantidade_total_piaui = sum(valor.get("ativas", {}).get("portes", {}).values())
             continue  
 
-        # Verifica se é um objeto de município válido
-        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí":
+        # Verifica se é um objeto de município válido e está na lista permitida
+        if isinstance(valor, dict) and "nome" in valor and valor["nome"].lower() != "piauí" and valor["nome"] in ALLOWED_CITIES:
             # Soma o estoque de ATIVAS
             quantidade = sum(valor.get("ativas", {}).get("portes", {}).values())
             
