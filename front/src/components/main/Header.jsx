@@ -57,7 +57,7 @@ export default function Header() {
           className="h-16 object-contain"
         />
         <h1 className="text-[#034ea2] text-2xl font-semibold">
-          Dados Empresariais
+          Pacto pela Economia
         </h1>
       </div>
 
