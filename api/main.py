@@ -177,12 +177,13 @@ async def obter_primeiro_ranking(
     mes_str = f"{mes:02d}"
     ano_str = str(ano)
 
+    search_terms = ALLOWED_CITIES + ALLOWED_CITIES_UPPER
     query = {
         "selector": {
             "tipo": "ranking",
             "ano": ano_str,
             "mes": mes_str,
-            "localidade": {"$in": ALLOWED_CITIES},
+            "localidade": {"$in": search_terms},
             "metricas.posicao": {"$gt": 0}
         },
         "sort": [{"metricas.posicao": "asc"}],
@@ -218,10 +219,11 @@ async def obter_classificacao_municipios(
     ano_str = str(ano)
 
     # 1. Buscar total do estado (Soma das 12 cidades permitidas)
+    search_terms = ALLOWED_CITIES + ALLOWED_CITIES_UPPER
     query_est = {
         "selector": {
             "tipo": tipo,
-            "localidade": {"$in": ALLOWED_CITIES},
+            "localidade": {"$in": search_terms},
             "ano": ano_str,
             "mes": mes_str
         },
@@ -424,10 +426,11 @@ async def buscar_dados_estatistica(tipo, codigo_ibge, ano, mes, client):
 
     # Caso especial: Piauí (Agregação das 12 cidades permitidas)
     if str(codigo_ibge) == "22":
+        search_terms = ALLOWED_CITIES + ALLOWED_CITIES_UPPER
         query = {
             "selector": {
                 "tipo": tipo,
-                "localidade": {"$in": ALLOWED_CITIES},
+                "localidade": {"$in": search_terms},
                 "ano": str(ano),
                 "mes": f"{mes:02d}"
             },
