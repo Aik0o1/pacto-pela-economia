@@ -27,6 +27,12 @@ async def setup_indexes():
                 "name": "idx_data_recente",
                 "type": "json"
             })
+            # Índice para o ranking (necessário para o sort por posição)
+            await client.post(url, json={
+                "index": {"fields": ["tipo", "ano", "mes", "metricas.posicao"]},
+                "name": "idx_ranking_posicao",
+                "type": "json"
+            })
         except Exception as e:
             print(f"Erro ao criar índice: {e}")
 
