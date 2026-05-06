@@ -91,7 +91,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           } else {
             const m = data.metricas;
             const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
-            
+
             const transformed = {
               posicao: m.posicao,
               pontuacao_total: m.pontuacao_total,
@@ -106,9 +106,11 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
               tempos_analise: {
                 ...(findCriterio("tempos_analise")?.detalhes || {}),
                 pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
-              }
+              },
+              quantidade_analises: findCriterio("tempos_analise")?.quantidade_analise || null
             };
             setDados(transformed);
+
           }
           // Se NENHUMA cidade foi selecionada, busca o primeiro do ranking
         } else {
@@ -127,7 +129,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           } else {
             const m = data.metricas;
             const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
-            
+
             const transformed = {
               posicao: m.posicao,
               pontuacao_total: m.pontuacao_total,
@@ -142,7 +144,8 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
               tempos_analise: {
                 ...(findCriterio("tempos_analise")?.detalhes || {}),
                 pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
-              }
+              },
+              quantidade_analises: findCriterio("tempos_analise")?.quantidade_analise || null
             };
             setPrimeiroCidade(data.localidade || "Sem dados");
             setDados(transformed);
@@ -400,40 +403,56 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           )}
         </div>
 
-        {/* Tempos de Análise - Accordion */}
+        {/* Desempenho das Análises - Accordion Unificado */}
         <Accordion type="single" collapsible className="border rounded-lg">
-          <AccordionItem value="tempos" className="border-none">
+          <AccordionItem value="analises" className="border-none">
             <AccordionTrigger className="flex w-full items-center gap-3 p-4 text-left hover:bg-gray-50 text-[#231f20]">
               <Clock className="h-5 w-5 shrink-0 text-[#034ea2]" />
-              <div className="w-full flex flex-col justify-between">
-                <span className="font-medium">Tempos de Análise</span>
+              <div className="w-full flex flex-col">
+                <span className="font-medium">Desempenho das Análises</span>
                 <p className="text-sm font-normal text-gray-500">
-                  Correspondente aos processos de abertura e alteração
+                  Volume e tempo médio por tipo de processo
                 </p>
               </div>
             </AccordionTrigger>
             <AccordionContent className="p-4 pt-0">
-              {dados?.tempos_analise ? (
-                <ul className="space-y-2">
-                  {Object.entries(dados.tempos_analise)
-                    .filter(([key]) => key !== "pontuacao")
-                    .map(([doc, tempo]) => (
-                      <li
-                        key={doc}
-                        className="flex justify-between py-2 border-b last:border-b-0"
-                      >
-                        <span className="font-medium">
-                          {documentLabels[doc]}
-                        </span>
-                        <span className="text-[#034ea2] font-mono">
-                          {tempo ? formatTime(tempo) : "-"}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500">Sem dados</p>
-              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="border-b text-gray-400 font-normal">
+                      <th className="py-2 font-medium text-xs uppercase tracking-wider">Processo</th>
+                      <th className="py-2 text-right font-medium text-xs uppercase tracking-wider">Qtd.</th>
+                      <th className="py-2 text-right font-medium text-xs uppercase tracking-wider">Tempo Médio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {["al", "as", "cp", "im"].map((doc) => {
+                      const tempo = dados?.tempos_analise?.[doc];
+                      const qtd = dados?.quantidade_analises?.[doc];
+                      if (!tempo && !qtd) return null;
+
+                      return (
+                        <tr key={doc} className="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 font-medium text-gray-700">
+                            {documentLabels[doc]}
+                          </td>
+                          <td className="py-3 text-right text-[#034ea2] font-semibold">
+                            {qtd?.toLocaleString("pt-BR") || 0}
+                          </td>
+                          <td className="py-3 text-right text-[#034ea2] font-mono">
+                            {tempo ? formatTime(tempo) : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(!dados?.tempos_analise && !dados?.quantidade_analises) && (
+                      <tr>
+                        <td colSpan="3" className="py-4 text-center text-gray-500">Sem dados disponíveis</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
