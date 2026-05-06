@@ -9,7 +9,6 @@ export default function Header() {
   useEffect(() => {
     const fetchDataAtualizacao = async () => {
       try {
-        // 1️⃣ Buscar mês e ano mais recentes
         const responseRecente = await fetch(`${apiUrl}/data_recente`, {
           headers: {
             Authorization: `Bearer ${apiToken}`,
@@ -20,25 +19,21 @@ export default function Header() {
           throw new Error("Erro ao buscar data recente");
         }
 
-        const { mes, ano } = await responseRecente.json();
+        const { atualizado_em } = await responseRecente.json();
 
-        // 2️⃣ Buscar dataAtualizacao usando o mês/ano mais recente
-        const responseAtualizacao = await fetch(
-          `${apiUrl}/data_atualizacao?mes=${mes}&ano=${ano}`,
-          {
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-            },
-          }
-        );
-
-        if (!responseAtualizacao.ok) {
-          throw new Error("Erro ao buscar data de atualização");
+        if (atualizado_em) {
+          const dataObj = new Date(atualizado_em);
+          const formatada = dataObj.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+          setDataAtualizacao(formatada);
+        } else {
+          setDataAtualizacao("Não disponível");
         }
-
-        const data = await responseAtualizacao.json();
-        setDataAtualizacao(data.dataAtualizacao);
-
       } catch (error) {
         console.error("Erro ao buscar última atualização:", error);
         setDataAtualizacao("Não disponível");
@@ -57,7 +52,7 @@ export default function Header() {
           className="h-16 object-contain"
         />
         <h1 className="text-[#034ea2] text-2xl font-semibold">
-          Pacto pela Economia
+          Dados Empresariais
         </h1>
       </div>
 

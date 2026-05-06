@@ -1,5 +1,6 @@
-Flask
-couchdb
+fastapi
+uvicorn
+pydantic
+httpx
 gunicorn
-flask-cors
 python-dotenv

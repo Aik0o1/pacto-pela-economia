@@ -1,13 +1,13 @@
 services:
   app:
-    container_name: front-mapa
-    image: front-mapa-municipal:14.0
+    container_name: front-pacto-pela-economia
+    image: front-pacto-pela-economia:1.0
     ports:
-      - "5173:80"
+      - "5174:80"
     depends_on:
-      - backend
-    restart: unless-stopped
+      - api
+    restart: unless-stopped 
   api:
-    container_name: api-mapa
-    image: api-mapa-municipal:7.0
+    container_name: api-pacto-pela-economia
+    image: api-pacto-pela-economia:1.0
     restart: unless-stopped

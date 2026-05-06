@@ -1,2 +1,25 @@
+# Ignorar ambientes virtuais locais
+.venv/
 venv/
+ENV/
+env/
+
+# Ignorar caches do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignorar arquivos de desenvolvimento e ambiente
+.python-version
+.git/
+.gitignore
+uv.lock
+README.md
+
+# Ignorar testes no build de produção
+tests/
 test*

@@ -37,64 +37,104 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const strId = String(onCidadeSelecionada.id || "");
-        const id = strId.includes("-")
-          ? strId.split("-")[1]
-          : strId;
+        const id = onCidadeSelecionada?.id || "22";
 
-        // setLoading(true);
-        // setError(null);
-        const { ano, mes } = await (
-          await fetch(`${apiUrl}/data_recente`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-              "Content-Type": "application/json", // opcional, mas comum
-            },
-          })
-        ).json();
+        // Fetch data_recente
+        const resDataRecente = await fetch(`${apiUrl}/data_recente`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const { ano, mes } = await resDataRecente.json();
 
-        // console.log(dataData)
+        const isPiaui = id === "22" || id === "";
+        const isTerritorio = String(id).startsWith("territorio:");
 
-        // const numero_mes = meses[mes];
-        // console.log("Mês:", numero_mes, "Ano:", ano, "Cidade:", id);
+        // encodeURIComponent é necessário pois o id pode conter ':' (ex: territorio:Cocais)
+        const idEncoded = encodeURIComponent(id);
+        const url_ativas = `${apiUrl}/estatistica/ativas/${idEncoded}?mes=${mes}&ano=${ano}`;
+        
+        const urlRanking = (isPiaui || isTerritorio)
+          ? `${apiUrl}/classificacao/municipios/ativas?mes=${mes}&ano=${ano}`
+          : null;
 
-        // Corrigindo a URL - removendo o "?" extra
-        const url_ativas = onCidadeSelecionada?.id
-          ? `${apiUrl}/empresas_ativas?cidade=${id}&mes=${mes}&ano=${ano}`
-          : `${apiUrl}/empresas_ativas?cidade=22&mes=${mes}&ano=${ano}`;
-
-        // URL para o ranking de ativas
-        const urlRanking = `${apiUrl}/ranking_ativas?mes=${mes}&ano=${ano}`;
-
-        // console.log("URL:", url_ativas);
-
-        const [response, resRanking] = await Promise.all([
+        const promises = [
           fetch(url_ativas, {
             method: "GET",
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-            },
-          }),
-          fetch(urlRanking, {
             headers: { Authorization: `Bearer ${apiToken}` },
-          }),
-        ]);
+          })
+        ];
 
-        const data = await response.json();
-        const dataRanking = await resRanking.json();
-
-        // console.log(data);
-
-        if (!response.ok || !data.ativas) {
-          setDados(null);
-        } else {
-          // console.log(data);
-
-          setDados(data.ativas);
+        if (urlRanking) {
+          promises.push(fetch(urlRanking, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${apiToken}` },
+          }));
         }
 
-        setRanking(resRanking.ok ? dataRanking : []);
+        const [response, resRanking] = await Promise.all(promises);
+
+        const data = await response.json();
+        let dataRanking = null;
+        if (resRanking) {
+          dataRanking = await resRanking.json();
+        }
+
+        if (response.ok && data.metricas) {
+          const m = data.metricas;
+          // Transformando o novo formato (listas) para o antigo (objetos) para manter compatibilidade
+          const transformed = {
+            ...m,
+            naturezas: m.naturezas ? Object.fromEntries(m.naturezas.map(i => [i.categoria, i.total])) : {},
+            portes: m.portes ? Object.fromEntries(m.portes.map(i => [i.categoria, i.total])) : {},
+            classificacoes: {},
+            secoes_por_classificacao: {},
+            total_ativas: m.total_ativas || m.total
+          };
+
+          if (m.setores_economicos) {
+            m.setores_economicos.forEach(s => {
+              // Normaliza o setor: 'Sem classificação' e '-' são o mesmo bucket
+              const rawCat = s.setor || s.categoria;
+              const cat = (rawCat === "Sem classificação" || rawCat === "-") ? "-" : rawCat;
+              transformed.classificacoes[cat] = (transformed.classificacoes[cat] || 0) + s.total;
+              const secoes = Object.fromEntries(
+                s.atividades.map(a => [a.descricao || a.categoria || a.setor || "-", a.total])
+              );
+              // Merge atividades para o mesmo bucket
+              if (!transformed.secoes_por_classificacao[cat]) {
+                transformed.secoes_por_classificacao[cat] = secoes;
+              } else {
+                Object.entries(secoes).forEach(([k, v]) => {
+                  transformed.secoes_por_classificacao[cat][k] = (transformed.secoes_por_classificacao[cat][k] || 0) + v;
+                });
+              }
+            });
+          }
+          setDados(transformed);
+        } else {
+          setDados(null);
+        }
+
+        // Lógica de Ranking
+        if (urlRanking && dataRanking && dataRanking.itens) {
+          if (isTerritorio && onCidadeSelecionada.cidadesIds) {
+            const filtrados = dataRanking.itens.filter(item => 
+              onCidadeSelecionada.cidadesIds.includes(Number(item.codigo_ibge))
+            );
+            const recalibrados = filtrados.map((item, idx) => ({
+              ...item,
+              posicao: idx + 1
+            }));
+            setRanking(recalibrados);
+          } else {
+            setRanking(dataRanking.itens);
+          }
+        } else {
+          setRanking([]);
+        }
 
         if (onCidadeSelecionada?.id) {
           setSelectedCity(onCidadeSelecionada.id);
@@ -258,6 +298,7 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
           municipio={municipio}
           ranking={ranking}
           tipo="ativas"
+          isTerritorio={String(onCidadeSelecionada.id || "").startsWith("territorio:")}
         />
 
         <Accordion type="single" collapsible className="border rounded-lg">
@@ -305,6 +346,8 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
               ) : (
                 <TabelaSetorizadaAtividades
                   secoesData={secoesClassificacaoData}
+                  localidade={municipio}
+                  totalOverride={dados?.total_ativas || dados?.total}
                 />
               )}
             </AccordionContent>

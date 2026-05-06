@@ -78,7 +78,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
             ? strId.split("-")[1]
             : strId;
 
-          const url = `${apiUrl}/empresas_abertas?cidade=${id}&mes=${numero_mes}&ano=${ano}`;
+          const url = `${apiUrl}/estatistica/ranking/${id}?mes=${numero_mes}&ano=${ano}`;
           const response = await fetch(url, {
             method: "GET",
             headers: { Authorization: `Bearer ${apiToken}` },
@@ -86,15 +86,34 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           });
           const data = await response.json();
 
-          if (!response.ok) {
+          if (!response.ok || !data.metricas) {
             setDados(null);
           } else {
-            setDados(data.ranking || null);
+            const m = data.metricas;
+            const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
+            
+            const transformed = {
+              posicao: m.posicao,
+              pontuacao_total: m.pontuacao_total,
+              documentos_habilitados: {
+                ...(findCriterio("documentos_habilitados")?.detalhes || {}),
+                pontuacao: findCriterio("documentos_habilitados")?.pontuacao || 0
+              },
+              indice_atendimentos: {
+                ...(findCriterio("indice_atendimentos")?.detalhes || {}),
+                pontuacao: findCriterio("indice_atendimentos")?.pontuacao || 0
+              },
+              tempos_analise: {
+                ...(findCriterio("tempos_analise")?.detalhes || {}),
+                pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
+              }
+            };
+            setDados(transformed);
           }
           // Se NENHUMA cidade foi selecionada, busca o primeiro do ranking
         } else {
           setPrimeiroCidade("Carregando..."); // Mostra o feedback aqui
-          const url = `${apiUrl}primeiro_ranking?mes=${numero_mes}&ano=${ano}`;
+          const url = `${apiUrl}/ranking/primeiro?mes=${numero_mes}&ano=${ano}`;
           const response = await fetch(url, {
             method: "GET",
             headers: { Authorization: `Bearer ${apiToken}` },
@@ -102,13 +121,31 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           });
           const data = await response.json();
 
-          if (!response.ok) {
+          if (!response.ok || !data.metricas) {
             setDados(null);
             setPrimeiroCidade("Sem dados");
           } else {
-            // ATUALIZA OS DOIS ESTADOS COM UMA ÚNICA CHAMADA
-            setPrimeiroCidade(data.municipio || "Sem dados");
-            setDados(data.ranking || null);
+            const m = data.metricas;
+            const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
+            
+            const transformed = {
+              posicao: m.posicao,
+              pontuacao_total: m.pontuacao_total,
+              documentos_habilitados: {
+                ...(findCriterio("documentos_habilitados")?.detalhes || {}),
+                pontuacao: findCriterio("documentos_habilitados")?.pontuacao || 0
+              },
+              indice_atendimentos: {
+                ...(findCriterio("indice_atendimentos")?.detalhes || {}),
+                pontuacao: findCriterio("indice_atendimentos")?.pontuacao || 0
+              },
+              tempos_analise: {
+                ...(findCriterio("tempos_analise")?.detalhes || {}),
+                pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
+              }
+            };
+            setPrimeiroCidade(data.localidade || "Sem dados");
+            setDados(transformed);
           }
         }
       } catch (err) {
@@ -134,7 +171,8 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
 
   const municipio =
     onCidadeSelecionada?.nome &&
-      onCidadeSelecionada.nome !== "Selecione uma localidade"
+      onCidadeSelecionada.nome !== "Selecione uma localidade" &&
+      onCidadeSelecionada.nome !== "Piauí" // Se for Piauí, queremos mostrar o nome da primeira cidade do ranking
       ? onCidadeSelecionada.nome
       : primeiroCidade || "Carregando...";
 

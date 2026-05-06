@@ -47,9 +47,9 @@ export function ComboboxCidades({ onCidadeSelect, cidadeSelecionada }) {
   }, []);
 
   useEffect(() => {
-    if (cidadeSelecionada?.nome?.startsWith("Território:") || cidadeSelecionada?.nome === "Selecione uma localidade") {
+    if (String(cidadeSelecionada?.id || "").startsWith("territorio:") || cidadeSelecionada?.nome === "Selecione uma localidade") {
       setValue("");
-    } else if (cidadeSelecionada?.nome) {
+    } else if (cidadeSelecionada?.nome && !cidadeSelecionada.isRegion) {
       setValue(cidadeSelecionada.nome);
     }
   }, [cidadeSelecionada]);

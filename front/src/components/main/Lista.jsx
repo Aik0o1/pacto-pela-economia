@@ -52,35 +52,95 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const strId = String(onCidadeSelecionada.id || "");
-        const id = strId.includes("-")
-          ? strId.split("-")[1]
-          : strId;
+        const id = onCidadeSelecionada?.id || "22";
         const numero_mes = meses[mes];
 
-        // Chamada existente para 'empresas_abertas'
-        const urlAbertas = onCidadeSelecionada?.id
-          ? `${apiUrl}/empresas_abertas?cidade=${id}&mes=${numero_mes}&ano=${ano}`
-          : `${apiUrl}/empresas_abertas?cidade=22&mes=${numero_mes}&ano=${ano}`;
+        // Se for Piauí ou Território, precisamos da classificação estadual para o ranking
+        const isPiaui = id === "22" || id === "";
+        const isTerritorio = String(id).startsWith("territorio:");
 
-        // NOVA chamada para 'ranking_aberturas'
-        // Geralmente rankings são por estado, então usamos o código '22' (Piauí) ou conforme sua lógica
-        const urlRanking = `${apiUrl}/ranking_aberturas?mes=${numero_mes}&ano=${ano}`;
+        // encodeURIComponent é necessário pois o id pode conter ':' (ex: territorio:Cocais)
+        const idEncoded = encodeURIComponent(id);
+        const urlAbertas = `${apiUrl}/estatistica/aberturas/${idEncoded}?mes=${numero_mes}&ano=${ano}`;
+        
+        // Sempre busca a classificação do estado se for Piauí ou um Território
+        const urlRanking = (isPiaui || isTerritorio)
+          ? `${apiUrl}/classificacao/municipios/aberturas?mes=${numero_mes}&ano=${ano}`
+          : null;
 
-        const [resAbertas, resRanking] = await Promise.all([
-          fetch(urlAbertas, {
-            headers: { Authorization: `Bearer ${apiToken}` },
-          }),
-          fetch(urlRanking, {
-            headers: { Authorization: `Bearer ${apiToken}` },
-          }),
-        ]);
+        const promises = [
+          fetch(urlAbertas, { headers: { Authorization: `Bearer ${apiToken}` } })
+        ];
+        
+        if (urlRanking) {
+          promises.push(fetch(urlRanking, { headers: { Authorization: `Bearer ${apiToken}` } }));
+        }
 
-        const dataAbertas = await resAbertas.json();
-        const dataRanking = await resRanking.json();
+        const responses = await Promise.all(promises);
+        const dataAbertas = await responses[0].json();
+        
+        let dataRanking = null;
+        if (urlRanking) {
+          dataRanking = await responses[1].json();
+        }
 
-        setDados(resAbertas.ok ? dataAbertas.abertas : null);
-        setRanking(resRanking.ok ? dataRanking : []);
+        if (responses[0].ok && dataAbertas.metricas) {
+          const m = dataAbertas.metricas;
+          const transformed = {
+            ...m,
+            naturezas: m.naturezas ? Object.fromEntries(m.naturezas.map(i => [i.categoria, i.total])) : {},
+            portes: m.portes ? Object.fromEntries(m.portes.map(i => [i.categoria, i.total])) : {},
+            classificacoes: {},
+            secoes_por_classificacao: {},
+            total_abertas: m.total_ativas || m.total
+          };
+
+          if (m.setores_economicos) {
+            m.setores_economicos.forEach(s => {
+              // Normaliza o setor: 'Sem classificação' e '-' são o mesmo bucket
+              const rawCat = s.setor || s.categoria;
+              const cat = (rawCat === "Sem classificação" || rawCat === "-") ? "-" : rawCat;
+              transformed.classificacoes[cat] = (transformed.classificacoes[cat] || 0) + s.total;
+              const secoes = Object.fromEntries(
+                s.atividades.map(a => [a.descricao || a.categoria || a.setor || "-", a.total])
+              );
+              // Merge atividades para o mesmo bucket
+              if (!transformed.secoes_por_classificacao[cat]) {
+                transformed.secoes_por_classificacao[cat] = secoes;
+              } else {
+                Object.entries(secoes).forEach(([k, v]) => {
+                  transformed.secoes_por_classificacao[cat][k] = (transformed.secoes_por_classificacao[cat][k] || 0) + v;
+                });
+              }
+            });
+          }
+          setDados(transformed);
+        } else {
+          setDados(null);
+        }
+        
+        // Lógica de Ranking
+        if (urlRanking && dataRanking && dataRanking.itens) {
+          if (isTerritorio && onCidadeSelecionada.cidadesIds) {
+            // Filtrar apenas municípios do território
+            const filtrados = dataRanking.itens.filter(item => 
+              onCidadeSelecionada.cidadesIds.includes(Number(item.codigo_ibge))
+            );
+            // Recalcular posições no contexto do território? 
+            // O usuário pediu "ranking", geralmente espera-se a posição relativa ao território ou manter a do estado.
+            // Vamos manter a posição do estado para ser fiel ao nome "Ranking" ou recalcular se for uma lista simples.
+            // Recalculando para parecer um ranking do território:
+            const recalibrados = filtrados.map((item, idx) => ({
+              ...item,
+              posicao: idx + 1
+            }));
+            setRanking(recalibrados);
+          } else {
+            setRanking(dataRanking.itens);
+          }
+        } else {
+          setRanking([]);
+        }
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       }
@@ -235,9 +295,10 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
           municipio={municipio}
           ranking={ranking}
           tipo="abertas"
+          isTerritorio={String(onCidadeSelecionada.id || "").startsWith("territorio:")}
         />
 
-        {!municipio.startsWith("Território:") && (
+        {!String(onCidadeSelecionada.id || "").startsWith("territorio:") && (
           <Accordion type="single" collapsible className="border rounded-lg">
             <AccordionItem value="tempos" className="border-none">
               <AccordionTrigger className="text-decorflex w-full items-center gap-3 p-4 text-left hover:bg-gray-50 text-[#231f20]">
@@ -328,6 +389,8 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
               ) : (
                 <TabelaSetorizadaAtividades
                   secoesData={secoesClassificacaoData}
+                  localidade={municipio}
+                  totalOverride={dados?.total_abertas || dados?.total}
                 />
               )}
             </AccordionContent>

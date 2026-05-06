@@ -223,8 +223,7 @@ export default function HierarchicalTreeMap({ secoesData, title }) {
           .style("visibility", "visible")
           .html(
             `<strong style="color: #FFD700; font-size: 11px;">${setorNome}</strong><br>
-             
-            <strong style="color: #FFF; font-size: 15px;">${d.data.name}</strong><br>
+             <strong style="color: #FFF; font-size: 15px;">${d.data.name}</strong><br>
              <span style="font-size: 16px; margin-top: 6px; display: block;">Empresas: <strong style="color: #FFD700;">${d.value.toLocaleString('pt-BR')}</strong></span>`
           );
       })

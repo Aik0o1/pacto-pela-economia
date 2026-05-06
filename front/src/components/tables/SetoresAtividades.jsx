@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 
-export default function TabelaSetorizadaAtividades({ secoesData }) {
+export default function TabelaSetorizadaAtividades({ secoesData, localidade, totalOverride }) {
   // 1. Prepara os dados agrupados e calcula totais por setor com ordenação decrescente
   const { grupos, totalGeral } = useMemo(() => {
     if (!secoesData) return { grupos: [], totalGeral: 0 };
@@ -12,7 +12,7 @@ export default function TabelaSetorizadaAtividades({ secoesData }) {
       { nome: "Serviços", dados: prepararSetor(secoesData.servico), cor: "bg-blue-600", textoCor: "text-blue-700" },
       { nome: "Comércio", dados: prepararSetor(secoesData.comercio), cor: "bg-green-600", textoCor: "text-green-700" },
       { nome: "Indústria", dados: prepararSetor(secoesData.industria), cor: "bg-orange-600", textoCor: "text-orange-700" },
-      { nome: "-", dados: prepararSetor(secoesData["-"]), cor: "bg-gray-600", textoCor: "text-gray-700" },
+      { nome: "Sem Classificação", dados: prepararSetor(secoesData["-"]), cor: "bg-gray-400", textoCor: "text-gray-600" },
     ];
 
     // Calcula o total geral somando todos os setores
@@ -29,6 +29,9 @@ export default function TabelaSetorizadaAtividades({ secoesData }) {
     return { grupos: gruposProcessados, totalGeral: total };
   }, [secoesData]);
 
+  // Usa o total real da API se disponível, senão usa a soma dos setores
+  const totalParaExibir = totalOverride || totalGeral;
+
   if (totalGeral === 0) {
     return <p className="text-center text-gray-500 py-10">Sem dados para exibir.</p>;
   }
@@ -39,16 +42,16 @@ export default function TabelaSetorizadaAtividades({ secoesData }) {
         <table className="w-full text-left text-sm border-collapse">
           <thead className="sticky top-0 bg-gray-50 text-[10px] text-gray-400 uppercase border-b z-20 shadow-sm">
             <tr>
-              <th className="px-4 py-3">Setor / Atividades Econômicas no Setor</th>
-              <th className="px-4 py-3 text-right">Qtd. Aberturas</th>
-              <th className="px-4 py-3 text-right">% Aberturas em Relação ao Total</th>
+          <th className="px-4 py-3">Setor / Atividades Econômicas no Setor</th>
+              <th className="px-4 py-3 text-right">Qtd. Empresas</th>
+              <th className="px-4 py-3 text-right">% em Relação ao Total</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {grupos.map((grupo) => {
               if (grupo.dados.length === 0) return null;
 
-              const percentSetor = totalGeral > 0 ? ((grupo.totalSetor / totalGeral) * 100).toFixed(1) : "0";
+              const percentSetor = totalParaExibir > 0 ? ((grupo.totalSetor / totalParaExibir) * 100).toFixed(1) : "0";
 
               return (
                 <React.Fragment key={grupo.nome}>
@@ -74,7 +77,7 @@ export default function TabelaSetorizadaAtividades({ secoesData }) {
                   
                   {/* Atividades ordenadas de forma decrescente */}
                   {grupo.dados.map((item, index) => {
-                    const percentTotal = totalGeral > 0 ? ((item.value / totalGeral) * 100).toFixed(1) : "0";
+                    const percentTotal = totalParaExibir > 0 ? ((item.value / totalParaExibir) * 100).toFixed(1) : "0";
                     return (
                       <tr key={`${grupo.nome}-${index}`} className="hover:bg-blue-50/30 transition-colors">
                         <td className="px-10 py-2.5 leading-tight text-gray-700">
@@ -98,10 +101,10 @@ export default function TabelaSetorizadaAtividades({ secoesData }) {
 
       <div className="p-4 bg-gray-100 border-t flex justify-between items-center">
         <span className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">
-            Total Consolidado (Estado)
+            Total Consolidado {localidade ? `(${localidade})` : ""}
         </span>
         <span className="font-extrabold text-[#034ea2] text-xl">
-          {totalGeral.toLocaleString("pt-BR")}
+          {totalParaExibir.toLocaleString("pt-BR")}
         </span>
       </div>
     </div>

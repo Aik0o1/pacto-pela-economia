@@ -51,7 +51,7 @@ function MainContent() {
 
   useEffect(() => {
     // If we switch to the ranking tab and a region is currently selected, clear it
-    if (activeTab === "ranking" && cidade?.nome?.startsWith("Território:")) {
+    if (activeTab === "ranking" && String(cidade?.id || "").startsWith("territorio:")) {
       setCidade({ nome: 'Selecione uma localidade', id: '' });
     }
   }, [activeTab, cidade]);

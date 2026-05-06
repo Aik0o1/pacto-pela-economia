@@ -62,8 +62,8 @@ export function ComboboxRegiao({ onRegiaoSelect, regiaoSelecionada }) {
 
         // Add the regions to the top of the selectable list
         const regionOptions = Object.entries(regioesMap).map(([regName, idsArray]) => ({
-          id: `Território: ${regName}`, // Let the backend resolve this
-          nome: `Território: ${regName}`, // Prefix "Território: " to differentiate visually
+          id: `territorio:${regName}`, 
+          nome: regName, 
           isRegion: true,
           cidadesIds: idsArray // Keep the array for local map rendering
         }));
@@ -78,9 +78,9 @@ export function ComboboxRegiao({ onRegiaoSelect, regiaoSelecionada }) {
   }, []);
 
   useEffect(() => {
-    if (!regiaoSelecionada?.nome?.startsWith("Território:")) {
+    if (!String(regiaoSelecionada?.id || "").startsWith("territorio:")) {
       setValue("");
-    } else if (regiaoSelecionada?.nome?.startsWith("Território:")) {
+    } else {
       setValue(regiaoSelecionada.nome);
     }
   }, [regiaoSelecionada]);
