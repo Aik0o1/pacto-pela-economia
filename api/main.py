@@ -396,6 +396,33 @@ def sumar_metricas(docs):
             avg = total_sec // counts[k]
             tempos_medios[k] = f"{avg//3600:02d}:{(avg%3600)//60:02d}:{avg%60:02d}"
 
+    # Sumariza critérios do ranking (se existirem)
+    totais_ranking = {}
+    for doc in docs:
+        m = doc.get("metricas")
+        if not m: continue
+        criterios = m.get("criterios", [])
+        for crit in criterios:
+            cat = crit.get("categoria")
+            if not cat: continue
+            
+            if cat not in totais_ranking:
+                totais_ranking[cat] = {"pontuacao": 0, "detalhes": defaultdict(float), "quantidade_analise": defaultdict(int)}
+            
+            totais_ranking[cat]["pontuacao"] += crit.get("pontuacao", 0)
+            
+            detalhes = crit.get("detalhes", {})
+            if isinstance(detalhes, dict):
+                for k, v in detalhes.items():
+                    if isinstance(v, (int, float)):
+                        totais_ranking[cat]["detalhes"][k] += v
+            
+            q_analise = crit.get("quantidade_analise", {})
+            if isinstance(q_analise, dict):
+                for k, v in q_analise.items():
+                    if isinstance(v, (int, float)):
+                        totais_ranking[cat]["quantidade_analise"][k] += v
+
     # Transformar de volta para listas
     final_metricas = {
         "total": res["total"],
@@ -403,6 +430,19 @@ def sumar_metricas(docs):
         "naturezas": [{"categoria": k, "total": v} for k, v in res["naturezas"].items()],
         "setores_economicos": []
     }
+    
+    if totais_ranking:
+        final_metricas["criterios"] = []
+        for cat, data in totais_ranking.items():
+            item = {
+                "categoria": cat,
+                "pontuacao": round(data["pontuacao"] / len(docs), 1) if len(docs) > 0 else 0,
+                "detalhes": dict(data["detalhes"])
+            }
+            if data["quantidade_analise"]:
+                item["quantidade_analise"] = dict(data["quantidade_analise"])
+            final_metricas["criterios"].append(item)
+
     
     if tempos_medios:
         final_metricas["tempos"] = tempos_medios
