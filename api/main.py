@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHea
 from typing import Optional, List
 import httpx
 import os
+import datetime
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from database import get_db_client, setup_indexes
@@ -581,6 +582,202 @@ async def buscar_dados_estatistica(tipo, codigo_ibge, ano, mes, client):
         )
         
     return docs[0]
+
+@router.get(
+    "/ranking/historico/{codigo_ibge}",
+    summary="Histórico de pontuação do ranking municipal",
+    description="Retorna o histórico mensal de pontuação no ranking para um município, a partir de dezembro de 2025."
+)
+async def obter_historico_ranking(
+    codigo_ibge: str = Path(..., description="Código IBGE do município"),
+    client: httpx.AsyncClient = Depends(get_db_client)
+):
+    query = {
+        "selector": {
+            "tipo": "ranking",
+            "codigo_ibge": str(codigo_ibge)
+        },
+        "sort": [{"ano": "asc"}, {"mes": "asc"}],
+        "limit": 100,
+        "fields": ["ano", "mes", "localidade", "metricas"]
+    }
+
+    res = await client.post("/_find", json=query)
+    docs = res.json().get("docs", [])
+
+    meses_abrev = {
+        "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr",
+        "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago",
+        "09": "Set", "10": "Out", "11": "Nov", "12": "Dez"
+    }
+
+    data_inicio = (2025, 12)
+    historico = []
+
+    for doc in docs:
+        ano = doc.get("ano")
+        mes = doc.get("mes")
+        if not ano or not mes:
+            continue
+        try:
+            if (int(ano), int(mes)) < data_inicio:
+                continue
+        except ValueError:
+            continue
+
+        m = doc.get("metricas", {})
+        criterios = m.get("criterios", [])
+
+        def get_pontuacao(categoria, _criterios=criterios):
+            c = next((x for x in _criterios if x.get("categoria") == categoria), None)
+            return c.get("pontuacao", 0) if c else 0
+
+        historico.append({
+            "mes": mes,
+            "ano": ano,
+            "label": f"{meses_abrev.get(mes, mes)}/{ano}",
+            "posicao": m.get("posicao"),
+            "pontuacao_total": m.get("pontuacao_total", 0) or 0,
+            "documentos_habilitados": get_pontuacao("documentos_habilitados"),
+            "indice_atendimentos": get_pontuacao("indice_atendimentos"),
+            "indice_atendimentos_detalhes": next(
+                (x.get("detalhes", {}) for x in criterios if x.get("categoria") == "indice_atendimentos"),
+                {}
+            ),
+            "tempos_analise": get_pontuacao("tempos_analise"),
+            "tempos_detalhes": next(
+                (x.get("detalhes", {}) for x in criterios if x.get("categoria") == "tempos_analise"),
+                {}
+            )
+        })
+
+    return historico
+
+
+@router.get(
+    "/historico/aberturas/{codigo_ibge}",
+    summary="Histórico mensal de aberturas de empresas",
+    description="Retorna o total mensal de empresas abertas para um município, a partir de dezembro de 2025."
+)
+async def obter_historico_aberturas(
+    codigo_ibge: str = Path(..., description="Código IBGE do município"),
+    client: httpx.AsyncClient = Depends(get_db_client)
+):
+    # Descobre o mês/ano mais recente disponível para aberturas
+    try:
+        recente = await obter_data_recente_por_tipo("aberturas", client)
+        ano_fim = int(recente["ano"])
+        mes_fim = int(recente["mes"])
+    except HTTPException:
+        return []
+
+    meses_abrev = {
+        1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr",
+        5: "Mai", 6: "Jun", 7: "Jul", 8: "Ago",
+        9: "Set", 10: "Out", 11: "Nov", 12: "Dez"
+    }
+
+    inicio = datetime.date(2025, 12, 1)
+    fim = datetime.date(ano_fim, mes_fim, 1)
+    historico = []
+    current = inicio
+
+    # Busca direta por ID de documento (padrão: aberturas:{codigo_ibge}:{MM-YYYY})
+    while current <= fim:
+        mes_str = f"{current.month:02d}"
+        ano_str = str(current.year)
+        doc_id = f"aberturas:{codigo_ibge}:{mes_str}-{ano_str}"
+
+        response = await client.get(f"/{doc_id}")
+        if response.status_code == 200:
+            doc = response.json()
+            total = doc.get("metricas", {}).get("total", 0) or 0
+            historico.append({
+                "mes": mes_str,
+                "ano": ano_str,
+                "label": f"{meses_abrev[current.month]}/{current.year}",
+                "total": total
+            })
+
+        # Avança para o próximo mês
+        if current.month == 12:
+            current = datetime.date(current.year + 1, 1, 1)
+        else:
+            current = datetime.date(current.year, current.month + 1, 1)
+
+    return historico
+
+
+@router.get("/tabela/tempos", summary="Distribuição de tempos de análise por categoria")
+async def obter_tabela_tempos(municipio: Optional[str] = Query(None)):
+    import csv
+
+    csv_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "front", "src", "assets", "data",
+        "Tempo Médio x Quantidade Analise - May 6, 2026.csv"
+    )
+
+    BUCKETS = ["tempo_zero", "ate_24h", "de_24_a_48h", "de_48h_a_1sem", "de_1sem_a_1mes", "mais_1mes"]
+
+    filtro = municipio.strip().upper() if municipio else None
+
+    def parse_horas(s):
+        s = s.strip()
+        parts = s.split(":")
+        if len(parts) == 3:
+            try:
+                return int(parts[0]) + int(parts[1]) / 60 + int(parts[2]) / 3600
+            except ValueError:
+                pass
+        return None
+
+    def classificar(h):
+        if h == 0:
+            return "tempo_zero"
+        if h <= 24:
+            return "ate_24h"
+        if h <= 48:
+            return "de_24_a_48h"
+        if h <= 168:
+            return "de_48h_a_1sem"
+        if h <= 720:
+            return "de_1sem_a_1mes"
+        return "mais_1mes"
+
+    categorias: dict = {}
+
+    try:
+        with open(csv_path, encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f, delimiter=";")
+            for row in reader:
+                if filtro and row.get("Município", "").strip().upper() != filtro:
+                    continue
+
+                cat = row.get("Tipo Documento", "").strip()
+                tempo_str = row.get("Média Tempo de Analise", "").strip()
+                qtd = int(row.get("Qtd Analise", "1").strip() or 1)
+
+                if not cat or not tempo_str:
+                    continue
+
+                horas = parse_horas(tempo_str)
+                if horas is None:
+                    continue
+
+                if cat not in categorias:
+                    categorias[cat] = {b: 0 for b in BUCKETS}
+
+                categorias[cat][classificar(horas)] += qtd
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao ler CSV: {e}")
+
+    return [
+        {"categoria": cat, **dist, "total": sum(dist.values())}
+        for cat, dist in sorted(categorias.items())
+    ]
+
 
 app.include_router(router)
 
