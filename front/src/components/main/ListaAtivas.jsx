@@ -226,7 +226,7 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
   // Determina o nome do município baseado no tipo de dados
   const municipio =
     onCidadeSelecionada.nome === "Selecione uma localidade"
-      ? "Piauí"
+      ? "Municípios Pacto pela Economia"
       : onCidadeSelecionada.nome;
 
   // Calcula o total de empresas ativas somando todas as categorias

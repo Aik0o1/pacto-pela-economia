@@ -149,7 +149,7 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
   }, [onCidadeSelecionada, mes, ano]);
   const municipio =
     onCidadeSelecionada.nome == "Selecione uma localidade"
-      ? "Piauí"
+      ? "Municípios Pacto pela Economia"
       : onCidadeSelecionada.nome;
 
   const labels = {
