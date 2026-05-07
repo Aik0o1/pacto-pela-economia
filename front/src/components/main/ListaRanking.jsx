@@ -113,32 +113,11 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           if (!response.ok || !data.metricas) {
             setDados(null);
           } else {
-            const m = data.metricas;
-            const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
-
-            const transformed = {
-              posicao: m.posicao,
-              pontuacao_total: m.pontuacao_total,
-              documentos_habilitados: {
-                ...(findCriterio("documentos_habilitados")?.detalhes || {}),
-                pontuacao: findCriterio("documentos_habilitados")?.pontuacao || 0
-              },
-              indice_atendimentos: {
-                ...(findCriterio("indice_atendimentos")?.detalhes || {}),
-                pontuacao: findCriterio("indice_atendimentos")?.pontuacao || 0
-              },
-              tempos_analise: {
-                ...(findCriterio("tempos_analise")?.detalhes || {}),
-                pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
-              },
-              quantidade_analises: findCriterio("tempos_analise")?.quantidade_analise || null
-            };
-            setDados(transformed);
-
+            setDados(transformarMetricas(data.metricas));
           }
           // Se NENHUMA cidade foi selecionada, busca o primeiro do ranking
         } else {
-          setPrimeiroCidade("Carregando..."); // Mostra o feedback aqui
+          setPrimeiroCidade("Carregando...");
           const url = `${apiUrl}/ranking/primeiro?mes=${numero_mes}&ano=${ano}`;
           const response = await fetch(url, {
             method: "GET",
@@ -151,26 +130,6 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
             setDados(null);
             setPrimeiroCidade("Sem dados");
           } else {
-            const m = data.metricas;
-            const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
-
-            const transformed = {
-              posicao: m.posicao,
-              pontuacao_total: m.pontuacao_total,
-              documentos_habilitados: {
-                ...(findCriterio("documentos_habilitados")?.detalhes || {}),
-                pontuacao: findCriterio("documentos_habilitados")?.pontuacao || 0
-              },
-              indice_atendimentos: {
-                ...(findCriterio("indice_atendimentos")?.detalhes || {}),
-                pontuacao: findCriterio("indice_atendimentos")?.pontuacao || 0
-              },
-              tempos_analise: {
-                ...(findCriterio("tempos_analise")?.detalhes || {}),
-                pontuacao: findCriterio("tempos_analise")?.pontuacao || 0
-              },
-              quantidade_analises: findCriterio("tempos_analise")?.quantidade_analise || null
-            };
             setPrimeiroCidade(data.localidade || "Sem dados");
             setDados(transformarMetricas(data.metricas));
           }
@@ -452,7 +411,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
                   <tbody>
                     {["al", "as", "cp", "im"].map((doc) => {
                       const tempo = dados?.tempos_analise?.[doc];
-                      const qtd = dados?.quantidade_analises?.[doc];
+                      const qtd = dados?.quantidade_analise?.[doc];
                       if (!tempo && !qtd) return null;
 
                       return (
@@ -469,7 +428,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
                         </tr>
                       );
                     })}
-                    {(!dados?.tempos_analise && !dados?.quantidade_analises) && (
+                    {(!dados?.tempos_analise && !dados?.quantidade_analise) && (
                       <tr>
                         <td colSpan="3" className="py-4 text-center text-gray-500">Sem dados disponíveis</td>
                       </tr>
