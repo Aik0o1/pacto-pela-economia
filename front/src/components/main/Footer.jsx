@@ -1,6 +1,7 @@
 import { Separator } from "../ui/separator";
 import React from 'react';
-import logo from "../../assets/imgs/logo-rodape.png"
+import logo from "../../assets/imgs/brasao-pi.png"
+
 import logoVertical from "../../assets/imgs/logoVertical.png"
 
 const Footer = () => {

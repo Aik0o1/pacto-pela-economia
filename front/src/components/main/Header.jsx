@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import logo from "../../assets/imgs/pacto-economia.jpeg"
 
 export default function Header() {
   const apiUrl = import.meta.env.VITE_URL_API;
@@ -47,7 +48,7 @@ export default function Header() {
     <header className="header bg-white shadow-md py-4 px-6 flex items-center justify-between md:flex-row flex-col">
       <div className="flex items-center justify-center gap-4">
         <img
-          src="https://portal.pi.gov.br/jucepi/wp-content/uploads/sites/47/2023/03/jucepi_logo-768x177.jpg"
+          src={logo}
           alt="JUCEPI Logo"
           className="h-16 object-contain"
         />
