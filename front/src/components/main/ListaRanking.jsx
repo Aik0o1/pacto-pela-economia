@@ -10,7 +10,23 @@ import {
   LaptopMinimalCheck,
   Trophy,
   Clock,
+  UserRound,
 } from "lucide-react";
+
+const administradoresMunicipios = {
+  "Betânia do Piauí": { nome: "Marcos Jose Ribeiro de Araujo", contato: "89 99418-2410" },
+  "Buriti dos Montes": { nome: "Antonio Sergio Alves Cruz", contato: "86 98102-6560" },
+  "Campo Largo do Piauí": { nome: "Jorge Luíz Silva Soares", contato: "86 98130-0364" },
+  "Cocal dos Alves": { nome: "Antonio Vieira Da Silva", contato: "86 99946-1362" },
+  "Coronel José Dias": { nome: "Wericles Silva Nascimento", contato: "89 98120-9440" },
+  "Cristino Castro": { nome: "Gladéria Mendes de Sousa", contato: "89 98118-8768" },
+  "Ipiranga do Piauí": { nome: "Simone Da Silva Fontes", contato: "89 98814-8870" },
+  "Jerumenha": { nome: "Raquel Brito Silva", contato: "89 99448-5425" },
+  "Monsenhor Gil": { nome: "Adonildo De Oliveira Santos", contato: "86 99810-0361" },
+  "São José do Peixe": { nome: "Elisiane Pereira Da Silva", contato: "89 99426-6630" },
+  "São José do Piauí": { nome: "Antonio João da Silva", contato: "89 98811-1687" },
+  "Tanque do Piauí": { nome: "Antonio Alves Da Anunciacao", contato: "89 98808-8900" },
+};
 import {
   AccordionItem,
   Accordion,
@@ -225,6 +241,33 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
             {dados?.posicao || "-"}
           </p>
         </div>
+
+        {/* Administrador do Município - Accordion */}
+        {administradoresMunicipios[municipio] && (
+          <Accordion type="single" collapsible className="w-full border rounded-lg">
+            <AccordionItem value="administrador" className="border-none">
+              <AccordionTrigger className="flex items-center gap-3 p-4 hover:bg-gray-50 text-[#231f20]">
+                <UserRound className="h-5 w-5 text-[#034ea2]" />
+                <div className="flex justify-between items-center w-full">
+                  <span className="font-medium">Administrador do Município</span>
+                  <span className="font-semibold text-[#034ea2] text-right">
+                    {administradoresMunicipios[municipio].nome}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-4 pt-0">
+                <ul className="space-y-2">
+                  <li className="flex justify-between py-2">
+                    <span className="font-medium">Contato</span>
+                    <span className="text-[#034ea2]">
+                      {administradoresMunicipios[municipio].contato}
+                    </span>
+                  </li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
 
         {/* Pontuação Total - Accordion */}
         <Accordion
