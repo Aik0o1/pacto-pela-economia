@@ -1,7 +1,7 @@
 import './App.css';
 import './Mapa.css';
 import Abas from './components/main/Tabs';
-import { useState, useEffect, useReducer } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/main/Header';
 import Footer from './components/main/Footer';
 import PiauiMapa from './components/main/Mapa';
@@ -14,94 +14,85 @@ function MainContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("ativas");
 
+  // Estado do filtro de intervalo (aba Evolução)
+  const [periodoInicio, setPeriodoInicio] = useState("12-2025");
+  const [periodoFim, setPeriodoFim] = useState("");
+  const [periodos, setPeriodos] = useState([]); // lista populada pelo AbaEvolucao
+
   const apiUrl = import.meta.env.VITE_URL_API;
-  const apiToken = import.meta.env.VITE_API_TOKEN
+  const apiToken = import.meta.env.VITE_API_TOKEN;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${apiUrl}/data_recente`, {
           method: "GET",
-          headers: {
-            'Authorization': `Bearer ${apiToken}`
-          }
+          headers: { 'Authorization': `Bearer ${apiToken}` }
         });
-
-        const data = await response.json(); // Recebe o JSON no formato { "mes": "MM", "ano": "AAAA" }
+        const data = await response.json();
 
         const meses = [
           "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
           "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
         ];
-
-        const mesRecente = meses[parseInt(data.mes, 10) - 1]; // Converte número do mês para nome
-        const anoRecente = data.ano;
-
-        setMes(mesRecente);
-        setAno(anoRecente);
+        setMes(meses[parseInt(data.mes, 10) - 1]);
+        setAno(data.ano);
         setLoading(false);
       } catch (error) {
         console.error("Erro ao buscar dados do servidor:", error);
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   useEffect(() => {
-    // If we switch to the ranking tab and a region is currently selected, clear it
     if (activeTab === "ranking" && String(cidade?.id || "").startsWith("territorio:")) {
       setCidade({ nome: 'Selecione uma localidade', id: '' });
     }
   }, [activeTab, cidade]);
 
-  if (loading) {
-    return <div>Carregando...</div>; // Exibe uma mensagem de carregamento enquanto os dados não chegam
-  }
-
-  const handleCidade = (cidade) => {
-    setCidade(cidade);
+  // Quando os períodos disponíveis chegam (via AbaEvolucao), inicializa periodoFim
+  const handlePeriodosChange = (lista) => {
+    setPeriodos(lista);
+    if (lista.length > 0 && !periodoFim) {
+      setPeriodoFim(lista[lista.length - 1].value);
+    }
   };
 
-  const handleMes = (mes) => {
-    setMes(mes);
-  };
-
-  const handleAnoSelecionado = (ano) => {
-    setAno(ano);
-  };
+  if (loading) return <div>Carregando...</div>;
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
-
       <Header />
       <Filtros
-        onCidadeSelecionada={handleCidade}
-        onMesSelecionado={handleMes}
-        onAnoSelecionado={handleAnoSelecionado}
+        onCidadeSelecionada={setCidade}
+        onMesSelecionado={setMes}
+        onAnoSelecionado={setAno}
         selectedMonth={mes}
         selectedYear={ano}
         cidadeSelecionada={cidade}
         activeTab={activeTab}
+        // Intervalo (Evolução)
+        periodos={periodos}
+        periodoInicio={periodoInicio}
+        periodoFim={periodoFim}
+        onPeriodoInicioChange={setPeriodoInicio}
+        onPeriodoFimChange={setPeriodoFim}
       />
       <div className="conteudo flex-1">
-        <PiauiMapa
-          onCidadeSelecionada={handleCidade}
-          cidadeSelecionada={cidade}
-        />
-
+        <PiauiMapa onCidadeSelecionada={setCidade} cidadeSelecionada={cidade} />
         <Abas
           cidadeSelecionada={cidade}
           mes={mes}
           ano={ano}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          periodoInicio={periodoInicio}
+          periodoFim={periodoFim}
+          onPeriodosChange={handlePeriodosChange}
         />
-
       </div>
-
-
       <Footer />
     </div>
   );
