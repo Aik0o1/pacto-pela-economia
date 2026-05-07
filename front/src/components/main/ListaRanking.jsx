@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TabelaTempos from "../tables/TabelaTempos";
 import {
   MapPin,
   FileText,
@@ -21,7 +22,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
   const [dados, setDados] = useState(null);
   const [error, setError] = useState(null);
   const [primeiroCidade, setPrimeiroCidade] = useState(null);
-  const [loading, setLoading] = useState(true); // Adicionado estado de loading
+  const [loading, setLoading] = useState(true);
 
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -39,6 +40,29 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
     Outubro: "10",
     Novembro: "11",
     Dezembro: "12",
+  };
+
+  const transformarMetricas = (m) => {
+    const findCriterio = (cat) => m.criterios?.find(c => c.categoria === cat);
+    const temposCriterio = findCriterio("tempos_analise");
+    return {
+      posicao: m.posicao,
+      pontuacao_total: m.pontuacao_total,
+      documentos_habilitados: {
+        ...(findCriterio("documentos_habilitados")?.detalhes || {}),
+        pontuacao: findCriterio("documentos_habilitados")?.pontuacao || 0,
+      },
+      indice_atendimentos: {
+        ...(findCriterio("indice_atendimentos")?.detalhes || {}),
+        pontuacao: findCriterio("indice_atendimentos")?.pontuacao || 0,
+      },
+      tempos_analise: {
+        ...(temposCriterio?.detalhes || {}),
+        pontuacao: temposCriterio?.pontuacao || 0,
+      },
+      faixas_tempos: temposCriterio?.faixas_tempos || {},
+      quantidade_analise: temposCriterio?.quantidade_analise || {},
+    };
   };
 
   useEffect(() => {
@@ -148,7 +172,7 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
               quantidade_analises: findCriterio("tempos_analise")?.quantidade_analise || null
             };
             setPrimeiroCidade(data.localidade || "Sem dados");
-            setDados(transformed);
+            setDados(transformarMetricas(data.metricas));
           }
         }
       } catch (err) {
@@ -166,11 +190,11 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
 
     fetchData();
 
-    // Função de limpeza para cancelar a requisição se o componente for desmontado
     return () => {
       controller.abort();
     };
-  }, [onCidadeSelecionada, mes, ano]); // Dependências estão corretas
+  }, [onCidadeSelecionada, mes, ano]);
+
 
   const municipio =
     onCidadeSelecionada?.nome &&
@@ -457,11 +481,10 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           </AccordionItem>
         </Accordion>
 
-        {/* <div className="legenda flex flex-col  lg:flex-row gap-2 justify-end">
-          <span className="flex gap-2 items-center mr-3  ">
-            Corresponde ao tempo de processos de abertura e alteração{" "}
-          </span>
-        </div> */}
+        <TabelaTempos
+          faixasTempos={dados?.faixas_tempos}
+          quantidadeAnalise={dados?.quantidade_analise}
+        />
       </div>
     </div>
   );
