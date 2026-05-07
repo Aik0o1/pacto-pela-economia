@@ -30,6 +30,8 @@ export default function Filtros(props) {
   const [selectedAno, setSelectedAno] = useState(props.selectedYear);
   const [dataRecente, setDataRecente] = useState(null);
 
+  const isEvolucao = props.activeTab === "evolucao";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -46,14 +48,6 @@ export default function Filtros(props) {
     };
     fetchData();
   }, [apiUrl, apiToken]);
-
-  const handleCidadeSelect = (cidade) => {
-    props.onCidadeSelecionada(cidade);
-  };
-
-  const handleRegiaoSelect = (regiao) => {
-    props.onCidadeSelecionada(regiao);
-  };
 
   const handleMesSelect = (mes) => {
     setSelectedMes(mes);
@@ -73,102 +67,162 @@ export default function Filtros(props) {
   };
 
   const limparFiltros = () => {
-    if (dataRecente) {
+    props.onCidadeSelecionada({ nome: "Selecione uma localidade", id: "" });
+    highlightCityOnMap();
+
+    if (isEvolucao) {
+      // Reseta o intervalo: início = dez/2025, fim = último disponível
+      props.onPeriodoInicioChange("12-2025");
+      const ultimo = props.periodos?.length > 0
+        ? props.periodos[props.periodos.length - 1].value
+        : "";
+      props.onPeriodoFimChange(ultimo);
+    } else if (dataRecente) {
       const mesRecente = mesesDict[dataRecente.mes];
       setSelectedMes(mesRecente);
       setSelectedAno(dataRecente.ano);
-
       props.onMesSelecionado(mesRecente);
       props.onAnoSelecionado(dataRecente.ano);
-      props.onCidadeSelecionada({ nome: "Selecione uma localidade", id: "" });
-      highlightCityOnMap();
     }
   };
 
   return (
     <div className="filtros text-[#034ea2] p-4 relative z-[1000]">
+      <div className="flex flex-col xl:flex-row items-center gap-4 justify-center w-full">
 
-      <div className="flex flex-col xl:flex-row items-center gap-6 justify-center w-full">
-
-        <div className="flex w-full flex-col items-center gap-4 xl:w-auto xl:flex-row xl:items-center xl:gap-3">
-          <div className="flex w-full flex-col xl:flex-row text-center gap-3 justify-center items-center">
+        {/* ── Localidade + Território + (Intervalo se evolucao) ── */}
+        <div className="flex w-full flex-col xl:flex-row items-center gap-3 xl:gap-4">
+          {/* Localidade */}
+          <div className="flex w-full xl:w-auto items-center gap-2 justify-center">
             <p className="whitespace-nowrap text-sm font-medium lg:text-base">
               Selecione uma localidade
             </p>
-            <div className="w-full xl:w-auto xl:flex-1 flex justify-center">
-              <ComboboxCidades
-                onCidadeSelect={(cidade) => {
-                  if (cidade.nome === "Piauí") {
-                    handleCidadeSelect({ ...cidade, id: "" });
-                  } else {
-                    handleCidadeSelect(cidade);
-                  }
-                }}
-                cidadeSelecionada={props.cidadeSelecionada}
+            <ComboboxCidades
+              onCidadeSelect={(cidade) => {
+                if (cidade.nome === "Piauí") {
+                  props.onCidadeSelecionada({ ...cidade, id: "" });
+                } else {
+                  props.onCidadeSelecionada(cidade);
+                }
+              }}
+              cidadeSelecionada={props.cidadeSelecionada}
+            />
+          </div>
+
+          {/* Território (oculto nas abas ranking e evolucao) */}
+          {props.activeTab !== "ranking" && !isEvolucao && (
+            <div className="flex w-full xl:w-auto items-center gap-2 justify-center">
+              <p className="whitespace-nowrap text-sm font-medium lg:text-base xl:ml-4">
+                Selecione um território
+              </p>
+              <ComboboxRegiao
+                onRegiaoSelect={(r) => props.onCidadeSelecionada(r)}
+                regiaoSelecionada={props.cidadeSelecionada}
               />
             </div>
+          )}
 
-            {props.activeTab !== "ranking" && (
-              <>
-                <p className="whitespace-nowrap text-sm font-medium lg:text-base xl:ml-4">
-                  Selecione um território
-                </p>
-                <div className="w-full xl:w-auto xl:flex-1 flex justify-center">
-                  <ComboboxRegiao
-                    onRegiaoSelect={handleRegiaoSelect}
-                    regiaoSelecionada={props.cidadeSelecionada}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex w-full flex-col items-center xl:w-auto xl:flex-row xl:items-center xl:gap-3 gap-3">
-          <p className="whitespace-nowrap text-sm font-medium lg:text-base legendaPeriodo">
-            Selecione o período
-          </p>
-
-          <div className="flex w-full gap-2 xl:w-auto justify-center">
-            <Select className="anoEscolha" onValueChange={handleAnoSelect} value={selectedAno}>
-              <SelectTrigger className="flex-1 xl:w-[140px] anoEscolha">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 8 }, (_, i) => {
-                  const ano = 2019 + i;
-                  return (
-                    <SelectItem key={ano} value={ano.toString()}>
-                      {ano}
+          {/* Filtro de intervalo (apenas na aba Evolução) */}
+          {isEvolucao && (
+            <div className="flex flex-wrap items-center gap-2 justify-center">
+              <p className="whitespace-nowrap text-sm font-medium lg:text-base">
+                Intervalo:
+              </p>
+              <Select
+                value={props.periodoInicio}
+                onValueChange={props.onPeriodoInicioChange}
+                disabled={!props.periodos?.length}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="De" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(props.periodos || []).map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
                     </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select onValueChange={handleMesSelect} value={selectedMes}>
-              <SelectTrigger className=" mesEscolha flex-1 md:w-[140px] lg:w-[160px]">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {meses.map((mes, index) => (
-                  <SelectItem key={index} value={mes}>
-                    {mes}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <span className="text-sm text-gray-500">até</span>
 
-          {/* Botão de Limpar Filtros */}
-          <Button
-            className="w-full md:w-[120px] lg:w-[140px] text-xs lg:text-sm limpar-filtros"
-            variant="outline"
-            onClick={limparFiltros}
-          >
-            Limpar Filtros
-          </Button>
+              <Select
+                value={props.periodoFim}
+                onValueChange={props.onPeriodoFimChange}
+                disabled={!props.periodos?.length}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Até" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(props.periodos || []).map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                className="text-xs lg:text-sm limpar-filtros"
+                variant="outline"
+                onClick={limparFiltros}
+              >
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* ── Período (ano + mês) — oculto na aba Evolução ── */}
+        {!isEvolucao && (
+          <div className="flex w-full flex-col items-center xl:w-auto xl:flex-row xl:items-center xl:gap-3 gap-3">
+            <p className="whitespace-nowrap text-sm font-medium lg:text-base legendaPeriodo">
+              Selecione o período
+            </p>
+
+            <div className="flex w-full gap-2 xl:w-auto justify-center">
+              <Select className="anoEscolha" onValueChange={handleAnoSelect} value={selectedAno}>
+                <SelectTrigger className="flex-1 xl:w-[140px] anoEscolha">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 8 }, (_, i) => {
+                    const ano = 2019 + i;
+                    return (
+                      <SelectItem key={ano} value={ano.toString()}>
+                        {ano}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={handleMesSelect} value={selectedMes}>
+                <SelectTrigger className="mesEscolha flex-1 md:w-[140px] lg:w-[160px]">
+                  <SelectValue placeholder="Mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {meses.map((mes, index) => (
+                    <SelectItem key={index} value={mes}>
+                      {mes}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              className="w-full md:w-[120px] lg:w-[140px] text-xs lg:text-sm limpar-filtros"
+              variant="outline"
+              onClick={limparFiltros}
+            >
+              Limpar Filtros
+            </Button>
+          </div>
+        )}
+
       </div>
     </div>
   );
