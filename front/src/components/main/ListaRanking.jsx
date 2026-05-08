@@ -244,29 +244,17 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
 
         {/* Administrador do Município - Accordion */}
         {administradoresMunicipios[municipio] && (
-          <Accordion type="single" collapsible className="w-full border rounded-lg">
-            <AccordionItem value="administrador" className="border-none">
-              <AccordionTrigger className="flex items-center gap-3 p-4 hover:bg-gray-50 text-[#231f20]">
-                <UserRound className="h-5 w-5 text-[#034ea2]" />
-                <div className="flex justify-between items-center w-full">
-                  <span className="font-medium">Administrador do Município</span>
-                  <span className="font-semibold text-[#034ea2] text-right">
-                    {administradoresMunicipios[municipio].nome}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="p-4 pt-0">
-                <ul className="space-y-2">
-                  <li className="flex justify-between py-2">
-                    <span className="font-medium">Contato</span>
-                    <span className="text-[#034ea2]">
-                      {administradoresMunicipios[municipio].contato}
-                    </span>
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="flex items-center gap-3">
+              <UserRound className="h-5 w-5 text-[#034ea2]" />
+
+              <p className="font-medium text-[#231f20]">Administrador do Município</p>
+            </div>
+
+            <p className="text-[#034ea2] font-semibold">
+              {administradoresMunicipios[municipio].nome}
+            </p>
+          </div>
         )}
 
         {/* Pontuação Total - Accordion */}
