@@ -53,7 +53,7 @@ export default function Header() {
           className="h-16 object-contain"
         />
         <h1 className="text-[#034ea2] text-2xl font-semibold">
-          Pacto pela Economia
+         Dados Empresariais - JUCEPI
         </h1>
       </div>
 
