@@ -1,13 +1,31 @@
 services:
-  app:
-    container_name: front-pacto-pela-economia
-    image: front-pacto-pela-economia:1.0
-    ports:
-      - "5174:80"
-    depends_on:
-      - api
-    restart: unless-stopped 
-  api:
-    container_name: api-pacto-pela-economia
-    image: api-pacto-pela-economia:1.0
+  front:
+  build:
+    context: ./front
+    network: host
+    args:
+      INFISICAL_CLIENT_ID: ${INFISICAL_CLIENT_ID}
+      INFISICAL_CLIENT_SECRET: ${INFISICAL_CLIENT_SECRET}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
+      INFISICAL_HOST: ${INFISICAL_HOST}
+  image: front-pacto-pela-economia-infisical:1.0
+  container_name: front-pacto-pela-economia-infisical
+  ports:
+    - "5174:80"
+  depends_on:
+    - backend
+  restart: unless-stopped
+
+  backend:
+    build:
+      context: ./api
+      network: host
+    image: backend-pacto-pela-economia-infisical:1.0
+    container_name: backend-pacto-pela-economia-infisical
     restart: unless-stopped
+    environment:
+      INFISICAL_CLIENT_ID: ${INFISICAL_CLIENT_ID}
+      INFISICAL_CLIENT_SECRET: ${INFISICAL_CLIENT_SECRET}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
+      INFISICAL_HOST: ${INFISICAL_HOST}
+    extra_hosts: ${INFISICAL_HOST}
