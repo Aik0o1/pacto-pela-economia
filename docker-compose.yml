@@ -28,4 +28,5 @@ services:
       INFISICAL_CLIENT_SECRET: ${INFISICAL_CLIENT_SECRET}
       INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
       INFISICAL_HOST: ${INFISICAL_HOST}
-    extra_hosts: ${INFISICAL_HOST}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
