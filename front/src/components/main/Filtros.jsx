@@ -31,6 +31,7 @@ export default function Filtros(props) {
   const [dataRecente, setDataRecente] = useState(null);
 
   const isEvolucao = props.activeTab === "evolucao";
+  const isEvolucaoGeral = props.activeTab === "evolucao_geral";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,12 +72,18 @@ export default function Filtros(props) {
     highlightCityOnMap();
 
     if (isEvolucao) {
-      // Reseta o intervalo: início = dez/2025, fim = último disponível
-      props.onPeriodoInicioChange("12-2025");
-      const ultimo = props.periodos?.length > 0
-        ? props.periodos[props.periodos.length - 1].value
-        : "";
+      const lista = props.periodos || [];
+      const ultimo = lista.length > 0 ? lista[lista.length - 1].value : "";
+      const idx = Math.max(0, lista.length - 6);
+      props.onPeriodoInicioChange(lista.length > 0 ? lista[idx].value : "");
       props.onPeriodoFimChange(ultimo);
+    } else if (isEvolucaoGeral) {
+      const lista = props.periodosGeral || [];
+      const ultimo = lista.length > 0 ? lista[lista.length - 1].value : "";
+      const idx = Math.max(0, lista.length - 6);
+      props.onPeriodoInicioGeralChange(lista.length > 0 ? lista[idx].value : "");
+      props.onPeriodoFimGeralChange(ultimo);
+      if (props.onResetCidadesGeral) props.onResetCidadesGeral();
     } else if (dataRecente) {
       const mesRecente = mesesDict[dataRecente.mes];
       setSelectedMes(mesRecente);
@@ -109,8 +116,8 @@ export default function Filtros(props) {
             />
           </div>
 
-          {/* Território (oculto nas abas ranking e evolucao) */}
-          {props.activeTab !== "ranking" && !isEvolucao && (
+          {/* Território (oculto nas abas ranking, evolucao e evolucao_geral) */}
+          {props.activeTab !== "ranking" && !isEvolucao && !isEvolucaoGeral && (
             <div className="flex w-full xl:w-auto items-center gap-2 justify-center">
               <p className="whitespace-nowrap text-sm font-medium lg:text-base xl:ml-4">
                 Selecione um território
@@ -122,7 +129,7 @@ export default function Filtros(props) {
             </div>
           )}
 
-          {/* Filtro de intervalo (apenas na aba Evolução) */}
+          {/* Filtro de intervalo — aba Evolução */}
           {isEvolucao && (
             <div className="flex flex-wrap items-center gap-2 justify-center">
               <p className="whitespace-nowrap text-sm font-medium lg:text-base">
@@ -138,15 +145,11 @@ export default function Filtros(props) {
                 </SelectTrigger>
                 <SelectContent>
                   {(props.periodos || []).map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
               <span className="text-sm text-gray-500">até</span>
-
               <Select
                 value={props.periodoFim}
                 onValueChange={props.onPeriodoFimChange}
@@ -157,26 +160,60 @@ export default function Filtros(props) {
                 </SelectTrigger>
                 <SelectContent>
                   {(props.periodos || []).map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <Button className="text-xs lg:text-sm limpar-filtros" variant="outline" onClick={limparFiltros}>
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
 
-              <Button
-                className="text-xs lg:text-sm limpar-filtros"
-                variant="outline"
-                onClick={limparFiltros}
+          {/* Filtro de intervalo — aba Evolução Geral */}
+          {isEvolucaoGeral && (
+            <div className="flex flex-wrap items-center gap-2 justify-center">
+              <p className="whitespace-nowrap text-sm font-medium lg:text-base">
+                Intervalo:
+              </p>
+              <Select
+                value={props.periodoInicioGeral}
+                onValueChange={props.onPeriodoInicioGeralChange}
+                disabled={!props.periodosGeral?.length}
               >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="De" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(props.periodosGeral || []).map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-500">até</span>
+              <Select
+                value={props.periodoFimGeral}
+                onValueChange={props.onPeriodoFimGeralChange}
+                disabled={!props.periodosGeral?.length}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Até" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(props.periodosGeral || []).map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button className="text-xs lg:text-sm limpar-filtros" variant="outline" onClick={limparFiltros}>
                 Limpar Filtros
               </Button>
             </div>
           )}
         </div>
 
-        {/* ── Período (ano + mês) — oculto na aba Evolução ── */}
-        {!isEvolucao && (
+        {/* ── Período (ano + mês) — oculto nas abas Evolução e Evolução Geral ── */}
+        {!isEvolucao && !isEvolucaoGeral && (
           <div className="flex w-full flex-col items-center xl:w-auto xl:flex-row xl:items-center xl:gap-3 gap-3">
             <p className="whitespace-nowrap text-sm font-medium lg:text-base legendaPeriodo">
               Selecione o período

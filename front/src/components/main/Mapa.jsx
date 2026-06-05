@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MapLeaflet from "./MapLeaflet";
 
-function PiauiMapa({ onCidadeSelecionada, cidadeSelecionada }) {
+function PiauiMapa({ onCidadeSelecionada, cidadeSelecionada, activeTab, cidadesSelecionadasGeral, onToggleCidadeGeral }) {
   const [cidades, setAllCidades] = useState([]);
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -38,6 +38,9 @@ function PiauiMapa({ onCidadeSelecionada, cidadeSelecionada }) {
         onCidadeSelecionada={onCidadeSelecionada}
         cidades={cidades}
         cidadeSelecionada={cidadeSelecionada}
+        modoMultiSelecao={activeTab === "evolucao_geral"}
+        cidadesSelecionadasGeral={cidadesSelecionadasGeral || []}
+        onToggleCidade={onToggleCidadeGeral}
       />
     </div>
   );

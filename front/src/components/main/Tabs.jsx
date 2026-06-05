@@ -3,6 +3,7 @@ import Lista from "./Lista";
 import ListaAtivas from "./ListaAtivas";
 import ListaRanking from "./ListaRanking";
 import AbaEvolucao from "./AbaEvolucao";
+import AbaEvolucaoGeral from "./AbaEvolucaoGeral";
 
 export default function Abas({
   cidadeSelecionada,
@@ -13,6 +14,12 @@ export default function Abas({
   periodoInicio,
   periodoFim,
   onPeriodosChange,
+  periodoInicioGeral,
+  periodoFimGeral,
+  onPeriodosGeralChange,
+  cidadesSelecionadasGeral,
+  onCidadesSelecionadasGeralChange,
+  onMunicipiosGeralCarregados,
 }) {
   return (
     <Tabs className="w-full px-2 lg:px-0 lg:pr-6" value={activeTab} onValueChange={setActiveTab}>
@@ -21,8 +28,8 @@ export default function Abas({
         place-items-center
         text-center
         grid
-        grid-cols-2
-        sm:grid-cols-4
+        grid-cols-3
+        sm:grid-cols-5
         h-auto
         p-1
         gap-2
@@ -40,6 +47,10 @@ export default function Abas({
         </TabsTrigger>
         <TabsTrigger value="evolucao" className="text-xs sm:text-sm py-2 w-full sm:py-3">
           Evolução
+        </TabsTrigger>
+        <TabsTrigger value="evolucao_geral" className="text-xs sm:text-sm py-2 w-full sm:py-3">
+          <span className="hidden sm:inline">Evolução Geral</span>
+          <span className="sm:hidden">Ev. Geral</span>
         </TabsTrigger>
       </TabsList>
 
@@ -65,6 +76,17 @@ export default function Abas({
           periodoInicio={periodoInicio}
           periodoFim={periodoFim}
           onPeriodosChange={onPeriodosChange}
+        />
+      </TabsContent>
+
+      <TabsContent value="evolucao_geral" className="mt-4">
+        <AbaEvolucaoGeral
+          periodoInicio={periodoInicioGeral}
+          periodoFim={periodoFimGeral}
+          onPeriodosChange={onPeriodosGeralChange}
+          cidadesSelecionadas={cidadesSelecionadasGeral}
+          onCidadesSelecionadasChange={onCidadesSelecionadasGeralChange}
+          onMunicipiosCarregados={onMunicipiosGeralCarregados}
         />
       </TabsContent>
     </Tabs>

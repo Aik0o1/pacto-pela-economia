@@ -1,7 +1,7 @@
 import './App.css';
 import './Mapa.css';
 import Abas from './components/main/Tabs';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from './components/main/Header';
 import Footer from './components/main/Footer';
 import PiauiMapa from './components/main/Mapa';
@@ -15,9 +15,35 @@ function MainContent() {
   const [activeTab, setActiveTab] = useState("ativas");
 
   // Estado do filtro de intervalo (aba Evolução)
-  const [periodoInicio, setPeriodoInicio] = useState("12-2025");
+  const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
-  const [periodos, setPeriodos] = useState([]); // lista populada pelo AbaEvolucao
+  const [periodos, setPeriodos] = useState([]);
+
+  // Estado do filtro de intervalo (aba Evolução Geral)
+  const [periodoInicioGeral, setPeriodoInicioGeral] = useState("");
+  const [periodoFimGeral, setPeriodoFimGeral] = useState("");
+  const [periodosGeral, setPeriodosGeral] = useState([]);
+
+  // Municípios selecionados na aba Evolução Geral (compartilhado com o mapa)
+  const [cidadesSelecionadasGeral, setCidadesSelecionadasGeral] = useState([]);
+  const [municipiosGeral, setMunicipiosGeral] = useState([]);
+
+  const toggleCidadeGeral = useCallback((nome) => {
+    setCidadesSelecionadasGeral(prev =>
+      prev.includes(nome) ? prev.filter(c => c !== nome) : [...prev, nome]
+    );
+  }, []);
+
+  const handleMunicipiosGeralCarregados = useCallback((municipios) => {
+    setMunicipiosGeral(municipios);
+    setCidadesSelecionadasGeral(prev =>
+      prev.length === 0 ? municipios.slice(0, 2).map(c => c.nome) : prev
+    );
+  }, []);
+
+  const resetCidadesGeral = useCallback(() => {
+    setCidadesSelecionadasGeral(municipiosGeral.slice(0, 2).map(c => c.nome));
+  }, [municipiosGeral]);
 
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -52,12 +78,26 @@ function MainContent() {
     }
   }, [activeTab, cidade]);
 
-  // Quando os períodos disponíveis chegam (via AbaEvolucao), inicializa periodoFim
   const handlePeriodosChange = (lista) => {
     setPeriodos(lista);
-    if (lista.length > 0 && !periodoFim) {
-      setPeriodoFim(lista[lista.length - 1].value);
-    }
+    if (lista.length === 0) return;
+    setPeriodoFim(prev => prev || lista[lista.length - 1].value);
+    setPeriodoInicio(prev => {
+      if (prev) return prev;
+      const idx = Math.max(0, lista.length - 6);
+      return lista[idx].value;
+    });
+  };
+
+  const handlePeriodosGeralChange = (lista) => {
+    setPeriodosGeral(lista);
+    if (lista.length === 0) return;
+    setPeriodoFimGeral(prev => prev || lista[lista.length - 1].value);
+    setPeriodoInicioGeral(prev => {
+      if (prev) return prev;
+      const idx = Math.max(0, lista.length - 6);
+      return lista[idx].value;
+    });
   };
 
   if (loading) return <div>Carregando...</div>;
@@ -73,15 +113,26 @@ function MainContent() {
         selectedYear={ano}
         cidadeSelecionada={cidade}
         activeTab={activeTab}
-        // Intervalo (Evolução)
         periodos={periodos}
         periodoInicio={periodoInicio}
         periodoFim={periodoFim}
         onPeriodoInicioChange={setPeriodoInicio}
         onPeriodoFimChange={setPeriodoFim}
+        periodosGeral={periodosGeral}
+        periodoInicioGeral={periodoInicioGeral}
+        periodoFimGeral={periodoFimGeral}
+        onPeriodoInicioGeralChange={setPeriodoInicioGeral}
+        onPeriodoFimGeralChange={setPeriodoFimGeral}
+        onResetCidadesGeral={resetCidadesGeral}
       />
       <div className="conteudo flex-1">
-        <PiauiMapa onCidadeSelecionada={setCidade} cidadeSelecionada={cidade} />
+        <PiauiMapa
+          onCidadeSelecionada={setCidade}
+          cidadeSelecionada={cidade}
+          activeTab={activeTab}
+          cidadesSelecionadasGeral={cidadesSelecionadasGeral}
+          onToggleCidadeGeral={toggleCidadeGeral}
+        />
         <Abas
           cidadeSelecionada={cidade}
           mes={mes}
@@ -91,6 +142,12 @@ function MainContent() {
           periodoInicio={periodoInicio}
           periodoFim={periodoFim}
           onPeriodosChange={handlePeriodosChange}
+          periodoInicioGeral={periodoInicioGeral}
+          periodoFimGeral={periodoFimGeral}
+          onPeriodosGeralChange={handlePeriodosGeralChange}
+          cidadesSelecionadasGeral={cidadesSelecionadasGeral}
+          onCidadesSelecionadasGeralChange={setCidadesSelecionadasGeral}
+          onMunicipiosGeralCarregados={handleMunicipiosGeralCarregados}
         />
       </div>
       <Footer />

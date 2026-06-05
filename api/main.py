@@ -611,7 +611,7 @@ async def obter_historico_ranking(
         "09": "Set", "10": "Out", "11": "Nov", "12": "Dez"
     }
 
-    data_inicio = (2025, 12)
+    data_inicio = (2025, 1)
     historico = []
 
     for doc in docs:

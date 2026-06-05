@@ -26,6 +26,32 @@ const normalize = (str) => {
     return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : "";
 };
 
+// Realça múltiplas cidades no mapa (modo Evolução Geral)
+const MapMultiHighlight = ({ cidadesSelecionadasGeral }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        const selectedSet = new Set(cidadesSelecionadasGeral);
+        const hasSelection = cidadesSelecionadasGeral.length > 0;
+        map.options.hasSelection = hasSelection;
+
+        map.eachLayer((l) => {
+            if (l.feature && l.feature.properties && l.setStyle) {
+                const isSelected = selectedSet.has(l.feature.properties.name);
+                l.options.selected = isSelected;
+                l.setStyle({
+                    weight: isSelected ? 3 : 1,
+                    color: isSelected ? '#000' : 'white',
+                    fillOpacity: (!isSelected && hasSelection) ? 0.4 : 1,
+                });
+                if (isSelected && l.bringToFront) l.bringToFront();
+            }
+        });
+    }, [cidadesSelecionadasGeral, map]);
+
+    return null;
+};
+
 const MapAutoZoom = ({ cidadeSelecionada, geoJsonData }) => {
     const map = useMap();
 
@@ -127,7 +153,7 @@ const ALLOWED_CITIES = [
     "Tanque do Piauí"
 ];
 
-const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
+const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada, modoMultiSelecao = false, cidadesSelecionadasGeral = [], onToggleCidade }) => {
     const [geoJsonData, setGeoJsonData] = useState(null);
 
     // Create a normalized lookup for regions
@@ -210,29 +236,43 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
             />
 
-            <MapAutoZoom cidadeSelecionada={cidadeSelecionada} geoJsonData={geoJsonData} />
-
-            {/* Dark overlay removed in favor of CSS filter on tiles */}
+            {!modoMultiSelecao && (
+                <MapAutoZoom cidadeSelecionada={cidadeSelecionada} geoJsonData={geoJsonData} />
+            )}
+            {modoMultiSelecao && (
+                <MapMultiHighlight cidadesSelecionadasGeral={cidadesSelecionadasGeral} />
+            )}
 
             <GeoJSON
-                key={geoJsonData.features.length}
+                key={`${geoJsonData.features.length}-${modoMultiSelecao}`}
                 data={geoJsonData}
                 style={(feature) => {
+                    if (modoMultiSelecao) {
+                        const isSelected = cidadesSelecionadasGeral.includes(feature.properties.name);
+                        return {
+                            fillColor: feature.properties.color,
+                            weight: isSelected ? 3 : 1,
+                            opacity: 1,
+                            color: isSelected ? '#000' : 'white',
+                            dashArray: '',
+                            fillOpacity: (!isSelected && cidadesSelecionadasGeral.length > 0) ? 0.4 : 1
+                        };
+                    }
                     const isSelected = targetIds.includes(String(feature.properties.codarea));
                     return {
                         fillColor: feature.properties.color,
                         weight: isSelected ? 3 : 1,
                         opacity: 1,
-                        color: 'white', // Using white border for better contrast
+                        color: 'white',
                         dashArray: '',
-                        fillOpacity: (targetIds.length > 0 && !isSelected) ? 0.4 : 1 // Full opacity for both green and blue unless something is selected
+                        fillOpacity: (targetIds.length > 0 && !isSelected) ? 0.4 : 1
                     };
                 }}
                 onEachFeature={(feature, layer) => {
                     const { name, regiao, codarea, isAllowed } = feature.properties;
 
                     if (!isAllowed) {
-                        return; // Do not add interactions to blocked cities
+                        return;
                     }
 
                     layer.bindTooltip(`
@@ -248,19 +288,14 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
 
                     layer.on({
                         click: (e) => {
-                            const map = e.target._map;
-                            map.fitBounds(e.target.getBounds(), { padding: [100, 100], maxZoom: 8 });
-
-                            const cidade = {
-                                id: codarea,
-                                nome: name
-                            };
-
-                            // Reset style of other layers
-                            const parentLayer = layer._layer || layer.options?.parentElement || e.target._eventParents ? Object.values(e.target._eventParents)[0] : null;
-
-                            if (onCidadeSelecionada) {
-                                onCidadeSelecionada(cidade);
+                            if (modoMultiSelecao && onToggleCidade) {
+                                onToggleCidade(name);
+                            } else {
+                                const map = e.target._map;
+                                map.fitBounds(e.target.getBounds(), { padding: [100, 100], maxZoom: 8 });
+                                if (onCidadeSelecionada) {
+                                    onCidadeSelecionada({ id: codarea, nome: name });
+                                }
                             }
                         },
                         mouseover: (e) => {
@@ -277,7 +312,6 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
                         mouseout: (e) => {
                             const l = e.target;
                             const mapHasSelection = e.target._map?.options?.hasSelection;
-
                             if (l.options.selected) {
                                 l.setStyle({
                                     weight: 3,
@@ -289,7 +323,7 @@ const MapLeaflet = ({ onCidadeSelecionada, cidades, cidadeSelecionada }) => {
                             } else {
                                 l.setStyle({
                                     weight: 1,
-                                    color: 'black',
+                                    color: modoMultiSelecao ? 'white' : 'black',
                                     dashArray: '',
                                     fillOpacity: mapHasSelection ? 0.4 : 1
                                 });
