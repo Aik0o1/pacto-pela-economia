@@ -4,6 +4,15 @@ import GraficoEvolucaoPosicao from "../graphs/GraficoEvolucaoPosicao";
 import GraficoTempos from "../graphs/GraficoTempos";
 import GraficoSolicitacoes from "../graphs/GraficoSolicitacoes";
 
+const MUNICIPIOS_SITE = new Set([
+  "Betânia do Piauí", "Buriti dos Montes", "Campo Largo do Piauí",
+  "Cocal dos Alves", "Coronel José Dias", "Cristino Castro",
+  "Ipiranga do Piauí", "Jerumenha", "Monsenhor Gil",
+  "São José do Peixe", "São José do Piauí", "Tanque do Piauí",
+]);
+
+const toSlug = (nome) => nome.toLowerCase().replace(/\s+/g, "-");
+
 const periodoToNum = (mesAno) => {
   if (!mesAno) return 0;
   const [mes, ano] = mesAno.split("-");
@@ -166,9 +175,22 @@ export default function AbaEvolucao({
     <div className="space-y-4">
 
       {/* Cidade exibida */}
-      <div className="flex items-center gap-2 px-1">
+      <div className="flex flex-wrap items-center gap-3 px-1">
         <p className="text-sm text-gray-500">Exibindo dados de:</p>
         <p className="text-sm font-semibold text-[#034ea2]">{cidadeEfetiva.nome}</p>
+        {MUNICIPIOS_SITE.has(cidadeEfetiva.nome) && (
+          <a
+            href={`https://rankingmunicipal.jucepi.pi.gov.br/municipio/${toSlug(cidadeEfetiva.nome)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-[#034ea2] hover:bg-[#023a7a] px-3 py-1.5 rounded-md transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Ver dados 2025
+          </a>
+        )}
       </div>
 
       {dadosFiltrados.length === 0 && (
