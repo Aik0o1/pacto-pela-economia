@@ -86,18 +86,6 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
           .attr("d", line);
       }
 
-      // Rótulo da pontuação acima de cada ponto
-      g.selectAll(null)
-        .data(dados)
-        .enter().append("text")
-        .attr("x", d => x(d.label))
-        .attr("y", d => y(d.pontuacao_total) - 10)
-        .attr("text-anchor", "middle")
-        .style("font-size", "10px")
-        .style("font-weight", "bold")
-        .style("fill", cor)
-        .text(d => d.pontuacao_total > 0 ? d.pontuacao_total : "");
-
       g.selectAll(null)
         .data(dados)
         .enter().append("circle")
@@ -111,21 +99,31 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
         .on("mouseover", function(event, d) {
           d3.select(this).attr("r", 7);
           const [mx, my] = d3.pointer(event, containerRef.current);
+
+          const linhas = cidadesSelecionadas
+            .map(c => {
+              const ponto = (dadosPorCidade[c] || []).find(x => x.label === d.label);
+              if (!ponto) return null;
+              return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+                <span style="color:${cores[c] || '#999'};font-size:10px">●</span>
+                <span style="color:#374151">${c}: <strong>${ponto.pontuacao_total}</strong></span>
+              </div>`;
+            })
+            .filter(Boolean)
+            .join("");
+
           tooltip
             .style("display", "block")
             .style("left", `${mx + 14}px`)
-            .style("top", `${my - 44}px`)
+            .style("top", `${my - 10}px`)
             .html(
-              `<div class="font-semibold" style="color:${cor}">${cidade}</div>` +
-              `<div class="text-gray-500">${d.label}</div>` +
-              `<div class="text-gray-800">${d.pontuacao_total} pontos</div>`
+              `<div style="font-weight:600;color:#4b5563;margin-bottom:4px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">${d.label}</div>` +
+              linhas
             );
         })
         .on("mousemove", function(event) {
           const [mx, my] = d3.pointer(event, containerRef.current);
-          tooltip
-            .style("left", `${mx + 14}px`)
-            .style("top", `${my - 44}px`);
+          tooltip.style("left", `${mx + 14}px`).style("top", `${my - 10}px`);
         })
         .on("mouseout", function() {
           d3.select(this).attr("r", 5);
@@ -151,7 +149,7 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
         <div
           ref={tooltipRef}
           className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs z-50"
-          style={{ display: "none" }}
+          style={{ display: "none", minWidth: "180px", maxWidth: "260px" }}
         />
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">

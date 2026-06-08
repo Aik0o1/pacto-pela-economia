@@ -44,16 +44,15 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
     const x = d3.scalePoint().domain(todosLabels).range([0, W]).padding(0.5);
     const y = d3.scaleLinear().domain([maxPos + 0.5, 0.5]).range([H, 0]);
 
-    // Grade horizontal — apenas posições inteiras
     g.selectAll(".grid-line")
       .data(d3.range(1, maxPos + 1))
       .enter().append("line")
       .attr("class", "grid-line")
+      .attr("x1", 0).attr("x2", W)
       .attr("y1", d => y(d)).attr("y2", d => y(d))
       .attr("stroke", "#e5e7eb")
       .attr("stroke-dasharray", "3,3");
 
-    // Eixo X
     const xAxis = g.append("g")
       .attr("transform", `translate(0,${H})`)
       .call(d3.axisBottom(x).tickSize(0));
@@ -65,7 +64,7 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
       .attr("transform", isMobile ? "rotate(-40)" : null)
       .style("text-anchor", isMobile ? "end" : "middle");
 
-
+   
     const tooltip = d3.select(tooltipRef.current);
 
     const line = d3.line()
@@ -88,18 +87,6 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
           .attr("d", line);
       }
 
-      // Rótulo da posição acima de cada ponto
-      g.selectAll(null)
-        .data(dados)
-        .enter().append("text")
-        .attr("x", d => x(d.label))
-        .attr("y", d => y(d.posicao) - 10)
-        .attr("text-anchor", "middle")
-        .style("font-size", "10px")
-        .style("font-weight", "bold")
-        .style("fill", cor)
-        .text(d => d.posicao ? `${d.posicao}º` : "");
-
       g.selectAll(null)
         .data(dados)
         .enter().append("circle")
@@ -113,21 +100,31 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
         .on("mouseover", function(event, d) {
           d3.select(this).attr("r", 7);
           const [mx, my] = d3.pointer(event, containerRef.current);
+
+          const linhas = cidadesSelecionadas
+            .map(c => {
+              const ponto = (dadosPorCidade[c] || []).find(p => p.label === d.label);
+              if (!ponto || !ponto.posicao) return null;
+              return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+                <span style="color:${cores[c] || '#999'};font-size:10px">●</span>
+                <span style="color:#374151">${c}: <strong>${ponto.posicao}º lugar</strong></span>
+              </div>`;
+            })
+            .filter(Boolean)
+            .join("");
+
           tooltip
             .style("display", "block")
             .style("left", `${mx + 14}px`)
-            .style("top", `${my - 44}px`)
+            .style("top", `${my - 10}px`)
             .html(
-              `<div class="font-semibold" style="color:${cor}">${cidade}</div>` +
-              `<div class="text-gray-500">${d.label}</div>` +
-              `<div class="text-gray-800">${d.posicao}º lugar</div>`
+              `<div style="font-weight:600;color:#4b5563;margin-bottom:4px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">${d.label}</div>` +
+              linhas
             );
         })
         .on("mousemove", function(event) {
           const [mx, my] = d3.pointer(event, containerRef.current);
-          tooltip
-            .style("left", `${mx + 14}px`)
-            .style("top", `${my - 44}px`);
+          tooltip.style("left", `${mx + 14}px`).style("top", `${my - 10}px`);
         })
         .on("mouseout", function() {
           d3.select(this).attr("r", 5);
@@ -153,7 +150,7 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
         <div
           ref={tooltipRef}
           className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs z-50"
-          style={{ display: "none" }}
+          style={{ display: "none", minWidth: "180px", maxWidth: "260px" }}
         />
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
