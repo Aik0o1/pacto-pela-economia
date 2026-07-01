@@ -392,9 +392,10 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
             <div className="px-4">
               <div className="mb-2">
                 <span className="text-2xl font-bold text-[#034ea2]">
-                  {(
-                    dados.indice_atendimentos.percentual_atendimento * 100
-                  ).toFixed(0)}
+                  {(() => {
+                    const percent = dados.indice_atendimentos.percentual_atendimento * 100;
+                    return percent % 1 === 0 ? percent.toFixed(0) : percent.toFixed(2).replace(".", ",");
+                  })()}
                   %
                 </span>
                 <span className="text-sm text-gray-600 ml-2">
