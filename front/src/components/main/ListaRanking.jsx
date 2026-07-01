@@ -188,12 +188,12 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
   const formatTime = (timeStr) => {
     if (!timeStr) return null;
 
-    // Aceita de 2 a 4 dígitos para horas
-    if (/^\d{2,4}:\d{2}:\d{2}$/.test(timeStr)) {
+    // Aceita 2 ou mais dígitos para horas
+    if (/^\d{2,}:\d{2}:\d{2}$/.test(timeStr)) {
       return timeStr;
     }
     // Tentar extrair tempo de strings complexas
-    const timeMatch = timeStr.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+    const timeMatch = timeStr.match(/(\d+):(\d{2}):(\d{2})/);
     if (timeMatch) {
       const hours = timeMatch[1].padStart(2, "0");
       return `${hours}:${timeMatch[2]}:${timeMatch[3]}`;
