@@ -121,12 +121,16 @@ export default function GraficoSolicitacoes({ dados }) {
           const [mx, my] = d3.pointer(event, containerRef.current);
           tooltip
             .style("display", "block")
-            .style("left", `${mx + 14}px`)
-            .style("top", `${my - 44}px`)
             .html(
               `<div style="font-weight:600;margin-bottom:3px;color:#374151">${d.label}</div>` +
               `<div style="color:${CORES[key]}">${LABELS[key]}: <strong>${val}</strong></div>`
             );
+
+          const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 150;
+          const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
+          tooltip
+            .style("left", `${leftPosition}px`)
+            .style("top", `${my - 44}px`);
         })
         .on("mouseout", function () {
           d3.select(this).attr("opacity", 1);

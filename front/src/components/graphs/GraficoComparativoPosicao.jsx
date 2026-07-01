@@ -115,16 +115,22 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
 
           tooltip
             .style("display", "block")
-            .style("left", `${mx + 14}px`)
-            .style("top", `${my - 10}px`)
             .html(
               `<div style="font-weight:600;color:#4b5563;margin-bottom:4px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">${d.label}</div>` +
               linhas
             );
+
+          const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
+          const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
+          tooltip
+            .style("left", `${leftPosition}px`)
+            .style("top", `${my - 10}px`);
         })
         .on("mousemove", function(event) {
           const [mx, my] = d3.pointer(event, containerRef.current);
-          tooltip.style("left", `${mx + 14}px`).style("top", `${my - 10}px`);
+          const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
+          const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
+          tooltip.style("left", `${leftPosition}px`).style("top", `${my - 10}px`);
         })
         .on("mouseout", function() {
           d3.select(this).attr("r", 5);
