@@ -95,10 +95,10 @@ export default function Filtros(props) {
 
   return (
     <div className="filtros text-[#034ea2] p-4 relative z-[1000]">
-      <div className="flex flex-col xl:flex-row items-center gap-4 justify-center w-full">
+      <div className="flex flex-col xl:flex-row xl:flex-wrap items-center gap-4 justify-center w-full">
 
         {/* ── Localidade + Território + (Intervalo se evolucao) ── */}
-        <div className="flex w-full flex-col xl:flex-row items-center gap-3 xl:gap-4">
+        <div className="flex w-full xl:w-auto flex-col xl:flex-row items-center gap-3 xl:gap-4">
           {/* Localidade */}
           <div className="flex w-full xl:w-auto items-center gap-2 justify-center">
             <p className="whitespace-nowrap text-sm font-medium lg:text-base">
