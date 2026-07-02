@@ -29,26 +29,26 @@ export default function Abas({
         text-center
         grid
         grid-cols-3
-        sm:grid-cols-5
+        lg:grid-cols-5
         h-auto
         p-1
         gap-2
       ">
-        <TabsTrigger value="ativas" className="text-xs w-full sm:text-sm py-2 sm:py-3">
+        <TabsTrigger value="ativas" className="text-xs w-full sm:text-sm py-2 sm:py-3 whitespace-normal text-center leading-tight">
           <span className="hidden sm:inline">Empresas Ativas</span>
           <span className="sm:hidden">Ativas</span>
         </TabsTrigger>
-        <TabsTrigger value="abertas" className="text-xs sm:text-sm w-full py-2 sm:py-3">
+        <TabsTrigger value="abertas" className="text-xs sm:text-sm w-full py-2 sm:py-3 whitespace-normal text-center leading-tight">
           <span className="hidden sm:inline">Abertura de Empresas</span>
           <span className="sm:hidden">Abertas</span>
         </TabsTrigger>
-        <TabsTrigger value="ranking" className="text-xs sm:text-sm py-2 w-full sm:py-3">
+        <TabsTrigger value="ranking" className="text-xs sm:text-sm py-2 w-full sm:py-3 whitespace-normal text-center leading-tight">
           Ranking
         </TabsTrigger>
-        <TabsTrigger value="evolucao" className="text-xs sm:text-sm py-2 w-full sm:py-3">
+        <TabsTrigger value="evolucao" className="text-xs sm:text-sm py-2 w-full sm:py-3 whitespace-normal text-center leading-tight">
           Evolução
         </TabsTrigger>
-        <TabsTrigger value="evolucao_geral" className="text-xs sm:text-sm py-2 w-full sm:py-3">
+        <TabsTrigger value="evolucao_geral" className="text-xs sm:text-sm py-2 w-full sm:py-3 whitespace-normal text-center leading-tight">
           <span className="hidden sm:inline">Evolução Geral</span>
           <span className="sm:hidden">Ev. Geral</span>
         </TabsTrigger>

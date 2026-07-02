@@ -472,10 +472,21 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           </AccordionItem>
         </Accordion>
 
-        <TabelaTempos
-          faixasTempos={dados?.faixas_tempos}
-          quantidadeAnalise={dados?.quantidade_analise}
-        />
+        <Accordion type="single" collapsible className="border rounded-lg">
+          <AccordionItem value="distribuicao-tempos" className="border-none">
+            <AccordionTrigger className="flex w-full items-center gap-3 p-4 text-left hover:bg-gray-50 text-[#231f20]">
+              <Clock className="h-5 w-5 shrink-0 text-[#034ea2]" />
+              <span className="font-medium">Distribuição dos Tempos de Análise por Categoria</span>
+            </AccordionTrigger>
+            <AccordionContent className="p-4 pt-0">
+              <TabelaTempos
+                faixasTempos={dados?.faixas_tempos}
+                quantidadeAnalise={dados?.quantidade_analise}
+                hasOuterBox={false}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );
