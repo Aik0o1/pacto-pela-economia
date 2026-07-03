@@ -46,6 +46,26 @@ function MainContent() {
     setCidadesSelecionadasGeral(municipiosGeral.slice(0, 2).map(c => c.nome));
   }, [municipiosGeral]);
 
+  const handleCidadeSelecionada = useCallback((novaCidade) => {
+    setCidade(prev => {
+      const parseId = (item) => {
+        if (!item?.id) return "";
+        const str = String(item.id);
+        return str.startsWith("cidade-") ? str.replace("cidade-", "") : str;
+      };
+
+      const novoId = parseId(novaCidade);
+      const novoNome = novaCidade?.nome || "";
+      const prevId = parseId(prev);
+      const prevNome = prev?.nome || "";
+
+      if (novoId === prevId && novoNome === prevNome) {
+        return prev;
+      }
+      return novaCidade;
+    });
+  }, []);
+
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
 
@@ -107,7 +127,7 @@ function MainContent() {
     <div className="bg-gray-50 min-h-screen flex flex-col">
       <Header />
       <Filtros
-        onCidadeSelecionada={setCidade}
+        onCidadeSelecionada={handleCidadeSelecionada}
         onMesSelecionado={setMes}
         onAnoSelecionado={setAno}
         selectedMonth={mes}
@@ -128,7 +148,7 @@ function MainContent() {
       />
       <div className="conteudo flex-1">
         <PiauiMapa
-          onCidadeSelecionada={setCidade}
+          onCidadeSelecionada={handleCidadeSelecionada}
           cidadeSelecionada={cidade}
           activeTab={activeTab}
           cidadesSelecionadasGeral={cidadesSelecionadasGeral}
