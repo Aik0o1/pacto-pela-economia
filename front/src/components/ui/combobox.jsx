@@ -102,7 +102,7 @@ export function ComboboxCidades({ onCidadeSelect, cidadeSelecionada }) {
           className="w-[250px] justify-between h-auto py-2"
         >
           <span className="text-left flex-1 break-words mr-2 whitespace-normal">
-            {value || "Selecione uma localidade"}
+            {value === "Piauí" ? "Municípios Pacto pela Economia" : (value || "Selecione uma localidade")}
           </span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -127,7 +127,7 @@ export function ComboboxCidades({ onCidadeSelect, cidadeSelecionada }) {
                         value === cidade.nome ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {cidade.nome}
+                    {cidade.nome === "Piauí" ? "Municípios Pacto pela Economia" : cidade.nome}
                   </CommandItem>
                 ))}
               </CommandGroup>
