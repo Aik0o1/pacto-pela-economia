@@ -79,6 +79,8 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
       if (dados.length > 1) {
         g.append("path")
           .datum(dados)
+          .attr("class", "line-path")
+          .attr("data-cidade", cidade)
           .attr("fill", "none")
           .attr("stroke", cor)
           .attr("stroke-width", 2)
@@ -89,6 +91,8 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
       g.selectAll(null)
         .data(dados)
         .enter().append("circle")
+        .attr("class", "dot-circle")
+        .attr("data-cidade", cidade)
         .attr("cx", d => x(d.label))
         .attr("cy", d => y(d.pontuacao_total))
         .attr("r", 5)
@@ -98,6 +102,24 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
         .style("cursor", "pointer")
         .on("mouseover", function(event, d) {
           d3.select(this).attr("r", 7);
+          
+          // Destacar a linha e bolinhas correspondentes a este município, atenuando as demais
+          g.selectAll(".line-path")
+            .attr("opacity", function() {
+              const c = d3.select(this).attr("data-cidade");
+              return c === cidade ? 1.0 : 0.15;
+            })
+            .attr("stroke-width", function() {
+              const c = d3.select(this).attr("data-cidade");
+              return c === cidade ? 3.5 : 1.5;
+            });
+
+          g.selectAll(".dot-circle")
+            .attr("opacity", function() {
+              const c = d3.select(this).attr("data-cidade");
+              return c === cidade ? 1.0 : 0.25;
+            });
+
           const [mx, my] = d3.pointer(event, containerRef.current);
 
           const linhas = cidadesSelecionadas
@@ -111,9 +133,15 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
             .filter(item => item.pontuacao !== null && item.pontuacao !== undefined)
             .sort((a, b) => b.pontuacao - a.pontuacao)
             .map(item => {
-              return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+              const isTarget = item.cidade === cidade;
+              const textStyle = isTarget 
+                ? `font-weight:bold;color:${cores[item.cidade] || '#111827'};font-size:12px;` 
+                : "color:#4b5563;font-size:11px;";
+              const valText = item.pontuacao !== null ? Math.round(item.pontuacao) : null;
+
+              return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px;${textStyle}">
                 <span style="color:${cores[item.cidade] || '#999'};font-size:10px">●</span>
-                <span style="color:#374151">${item.cidade}: <strong>${item.pontuacao}</strong></span>
+                <span>${item.cidade}: <strong>${valText}</strong></span>
               </div>`;
             })
             .join("");
@@ -164,6 +192,14 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
         .on("mouseout", function() {
           d3.select(this).attr("r", 5);
           tooltip.style("display", "none");
+
+          // Restaurar a opacidade padrão
+          g.selectAll(".line-path")
+            .attr("opacity", 0.85)
+            .attr("stroke-width", 2);
+
+          g.selectAll(".dot-circle")
+            .attr("opacity", 1.0);
         });
     });
   }, [dadosPorCidade, cidadesSelecionadas, cores]);
