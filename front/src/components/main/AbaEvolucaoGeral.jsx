@@ -124,9 +124,12 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
 
   if (loading) {
     return (
-      <p className="text-center text-gray-400 text-sm py-10">
-        Carregando dados de todos os municípios...
-      </p>
+      <div className="min-h-[400px] flex items-center justify-center bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando dados de todos os municípios...</p>
+        </div>
+      </div>
     );
   }
 
