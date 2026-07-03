@@ -11,6 +11,7 @@ import {
   Trophy,
   Clock,
   UserRound,
+  Info,
 } from "lucide-react";
 
 const administradoresMunicipios = {
@@ -238,6 +239,23 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
         </div>
       )}
       <div className="space-y-4">
+        {/* Link do Ranking Municipal no Topo */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 pb-1 px-1">
+          <Info className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <p>
+            Acesse o{" "}
+            <a
+              className="font-medium text-blue-600 underline hover:text-blue-800"
+              href="https://www.piauidigital.pi.gov.br/mapa-empresas/ranking-municipal"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ranking Municipal
+            </a>{" "}
+            para ver os municípios mais céleres na abertura de empresas.
+          </p>
+        </div>
+
         {/* Nome do município */}
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
           <div className="flex items-center gap-3">
@@ -320,37 +338,24 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           </AccordionItem>
         </Accordion>
 
-        <div className="legenda flex flex-col  lg:flex-row gap-2 justify-end">
-          <span className="flex gap-2 items-center mr-3  ">
-            <div className="w-3 h-3 rounded-full bg-[#008000] rigth"></div>
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[11px] sm:text-xs text-gray-500">
+          {/* <span className="font-semibold text-gray-600">Legenda da Pontuação:</span> */}
+          <span className="flex gap-1.5 items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#008000] shrink-0"></div>
             Mais que 75 pontos
           </span>
-
-          <span className="flex gap-2 items-center mr-3">
-            <div className="w-3 h-3 rounded-full bg-[#FFFF00]"></div>
+          <span className="flex gap-1.5 items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FFFF00] shrink-0 border border-gray-300"></div>
             Entre 51 e 75 pontos
           </span>
-
-          <span className="flex gap-2 items-center mr-3">
-            <div className="w-3 h-3 rounded-full bg-[#FF991C]"></div>
+          <span className="flex gap-1.5 items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FF991C] shrink-0"></div>
             Entre 26 e 50 pontos
           </span>
-
-          <span className="flex gap-2 items-center mr-3">
-            <div className="w-3 h-3 rounded-full bg-[#FF0000]"> </div>
+          <span className="flex gap-1.5 items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FF0000] shrink-0"></div>
             Igual ou menos que 25 pontos
           </span>
-        </div>
-
-        <div className="legenda flex flex-col  lg:flex-row gap-2 justify-end">
-          Acesse o{" "}
-          <a
-            className="font-medium text-blue-600 underline hover:text-blue-800"
-            href="https://www.piauidigital.pi.gov.br/mapa-empresas/ranking-municipal"
-          >
-            Ranking Municipal
-          </a>{" "}
-          para ver os municípios mais céleres na abertura de empresas
         </div>
 
         {/* Documentos Habilitados - Accordion */}
