@@ -277,14 +277,17 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
             const selecionado = cidadesSelecionadas.includes(c.nome);
             const cor = cores[c.nome];
             return (
-              <label key={c.id} className="flex items-center gap-2 cursor-pointer select-none group">
+              <div
+                key={c.id}
+                className="flex items-center gap-2 cursor-pointer select-none group p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                onClick={() => toggleCidade(c.nome)}
+              >
                 <div
-                  className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                  className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors"
                   style={selecionado
-                    ? { backgroundColor: cor, borderColor: cor }
+                    ? { backgroundColor: "#034ea2", borderColor: "#034ea2" }
                     : { backgroundColor: "white", borderColor: "#d1d5db" }
                   }
-                  onClick={() => toggleCidade(c.nome)}
                 >
                   {selecionado && (
                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -299,7 +302,7 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
                 <span className="text-xs text-gray-700 group-hover:text-gray-900 leading-tight">
                   {c.nome}
                 </span>
-              </label>
+              </div>
             );
           })}
         </div>

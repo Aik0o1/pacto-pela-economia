@@ -136,11 +136,13 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
               const isTarget = item.cidade === cidade;
               const textStyle = isTarget 
                 ? `font-weight:bold;color:${cores[item.cidade] || '#111827'};font-size:12px;` 
-                : "color:#4b5563;font-size:11px;";
+                : "color:#9ca3af;font-size:11px;";
               const valText = item.pontuacao !== null ? Math.round(item.pontuacao) : null;
 
+              const dotColor = isTarget ? (cores[item.cidade] || '#999') : '#d1d5db';
+
               return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px;${textStyle}">
-                <span style="color:${cores[item.cidade] || '#999'};font-size:10px">●</span>
+                <span style="color:${dotColor};font-size:10px">●</span>
                 <span>${item.cidade}: <strong>${valText}</strong></span>
               </div>`;
             })
