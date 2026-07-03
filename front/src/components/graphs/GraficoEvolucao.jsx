@@ -108,12 +108,73 @@ export default function GraficoEvolucao({ dados }) {
       .append("text")
       .attr("class", "score-label")
       .attr("x", (d) => x(d.label))
-      .attr("y", (d) => y(d.pontuacao_total) - 12)
+      .attr("y", (d) => y(d.pontuacao_total) - 14)
       .attr("text-anchor", "middle")
-      .style("font-size", "11px")
+      .style("font-size", "12px")
       .style("font-weight", "bold")
       .style("fill", "#034ea2")
       .text((d) => (d.pontuacao_total > 0 ? d.pontuacao_total : ""));
+
+    // Indicadores de variação de pontuação entre os meses
+    for (let i = 1; i < dados.length; i++) {
+      const pPrev = dados[i - 1].pontuacao_total;
+      const pCurr = dados[i].pontuacao_total;
+      if (pPrev === null || pPrev === undefined || pCurr === null || pCurr === undefined) continue;
+
+      const delta = pCurr - pPrev; // Atual menos anterior
+      const x1 = x(dados[i - 1].label);
+      const x2 = x(dados[i].label);
+      const y1 = y(pPrev);
+      const y2 = y(pCurr);
+
+      const cx = (x1 + x2) / 2;
+      const cy = (y1 + y2) / 2;
+
+      let text = "";
+      let bgColor = "";
+      let textColor = "";
+
+      if (delta > 0) {
+        text = `▲${delta}`;
+        bgColor = "#def7ec";
+        textColor = "#03543f";
+      } else if (delta < 0) {
+        text = `▼${Math.abs(delta)}`;
+        bgColor = "#fde8e8";
+        textColor = "#9b1c1c";
+      } else {
+        text = "=";
+        bgColor = "#f3f4f6";
+        textColor = "#4b5563";
+      }
+
+      const textLength = text.length;
+      const rectW = textLength === 1 ? 16 : textLength === 2 ? 28 : textLength === 3 ? 34 : 40;
+      const rectH = 16;
+
+      const badge = g.append("g")
+        .attr("transform", `translate(${cx},${cy - 12})`);
+
+      badge.append("rect")
+        .attr("x", -rectW / 2)
+        .attr("y", -rectH / 2)
+        .attr("width", rectW)
+        .attr("height", rectH)
+        .attr("rx", 3)
+        .attr("ry", 3)
+        .attr("fill", bgColor)
+        .attr("stroke", "white")
+        .attr("stroke-width", 1);
+
+      badge.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("y", 0.5)
+        .style("font-size", "11px")
+        .style("font-weight", "bold")
+        .style("fill", textColor)
+        .text(text);
+    }
   }, [dados]);
 
   useEffect(() => {
@@ -131,7 +192,7 @@ export default function GraficoEvolucao({ dados }) {
       <p className="text-sm font-medium text-[#231f20] mb-3">
         Evolução da Pontuação
       </p>
-      <div ref={containerRef} className="w-full overflow-hidden">
+      <div ref={containerRef} className="w-full relative">
         <svg ref={svgRef} className="w-full" />
       </div>
     </div>
