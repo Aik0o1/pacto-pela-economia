@@ -29,6 +29,16 @@ function labelToPeriodo(label) {
   return `${mesMap[m] || "01"}-${y}`;
 }
 
+const formatarPeriodo = (mesAno) => {
+  if (!mesAno) return "";
+  const [mes, ano] = mesAno.split("-");
+  const mesesExt = {
+    "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun",
+    "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez"
+  };
+  return `${mesesExt[mes] || mes}/${ano}`;
+};
+
 export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodosChange, cidadesSelecionadas, onCidadesSelecionadasChange, onMunicipiosCarregados }) {
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -319,7 +329,9 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
             {/* Tabela de Evolução da Posição */}
             <div className="bg-white border rounded-lg p-4 shadow-sm">
               <div className="mb-3 border-b pb-2">
-                <h3 className="text-sm font-semibold text-gray-800">Evolução da Posição no Período</h3>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Evolução da Posição ({formatarPeriodo(periodoInicio)} a {formatarPeriodo(periodoFim)})
+                </h3>
                 <p className="text-xs text-gray-500">
                   Melhor colocação (1º em diante). Clique nas colunas para ordenar.
                 </p>
@@ -376,7 +388,9 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
             {/* Tabela de Evolução da Pontuação */}
             <div className="bg-white border rounded-lg p-4 shadow-sm">
               <div className="mb-3 border-b pb-2">
-                <h3 className="text-sm font-semibold text-gray-800">Evolução da Pontuação no Período</h3>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Evolução da Pontuação ({formatarPeriodo(periodoInicio)} a {formatarPeriodo(periodoFim)})
+                </h3>
                 <p className="text-xs text-gray-500">
                   Total de pontos ganhos ou perdidos. Clique nas colunas para ordenar.
                 </p>
