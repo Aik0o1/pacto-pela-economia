@@ -13,7 +13,7 @@ import {
 import HierarchicalTreeMap from "../graphs/treeMap";
 export default function Lista({ onCidadeSelecionada, mes, ano }) {
   const [dados, setDados] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -295,11 +295,8 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
   return (
     <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px]">
       {loading && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 rounded-lg transition-all duration-300">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando dados de empresas Abertas em {municipio}...</p>
-          </div>
+        <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-50 rounded-lg">
+          <div className="w-8 h-8 border-2 border-gray-200 border-t-[#034ea2] rounded-full animate-spin"></div>
         </div>
       )}
       <ul className="space-y-4">

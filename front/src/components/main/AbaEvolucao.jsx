@@ -37,7 +37,7 @@ export default function AbaEvolucao({
 
   const [historico, setHistorico] = useState([]);
   const [historicoAberturas, setHistoricoAberturas] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [cidadeEfetiva, setCidadeEfetiva] = useState(null);
 
   // Resolve cidade: selecionada pelo usuário ou 1º lugar do ranking
@@ -54,6 +54,7 @@ export default function AbaEvolucao({
       return;
     }
 
+    setLoading(true);
     const controller = new AbortController();
     (async () => {
       try {
@@ -61,13 +62,23 @@ export default function AbaEvolucao({
           headers: { Authorization: `Bearer ${apiToken}` },
           signal: controller.signal,
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          setLoading(false);
+          setCidadeEfetiva(null);
+          return;
+        }
         const data = await res.json();
         if (data.codigo_ibge && data.localidade) {
           setCidadeEfetiva({ id: data.codigo_ibge, nome: data.localidade });
+        } else {
+          setLoading(false);
+          setCidadeEfetiva(null);
         }
       } catch (err) {
-        if (err.name !== "AbortError") setCidadeEfetiva(null);
+        if (err.name !== "AbortError") {
+          setCidadeEfetiva(null);
+          setLoading(false);
+        }
       }
     })();
     return () => controller.abort();
@@ -162,10 +173,7 @@ export default function AbaEvolucao({
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando evolução de {cidadeEfetiva?.nome}...</p>
-        </div>
+        <div className="w-8 h-8 border-2 border-gray-200 border-t-[#034ea2] rounded-full animate-spin"></div>
       </div>
     );
   }
