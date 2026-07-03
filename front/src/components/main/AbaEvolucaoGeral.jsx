@@ -36,8 +36,10 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
   const [municipios, setMunicipios] = useState([]);
   const [dadosPorCidade, setDadosPorCidade] = useState({});
   const [loading, setLoading] = useState(true);
-  const [sortField, setSortField] = useState("varPont");
-  const [sortDirection, setSortDirection] = useState("desc");
+  const [sortFieldPos, setSortFieldPos] = useState("varPos");
+  const [sortDirPos, setSortDirPos] = useState("desc");
+  const [sortFieldPont, setSortFieldPont] = useState("varPont");
+  const [sortDirPont, setSortDirPont] = useState("desc");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -163,35 +165,59 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
     });
   }, [dadosFiltrados, cidadesSelecionadas]);
 
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+  const handleSortPos = (field) => {
+    if (sortFieldPos === field) {
+      setSortDirPos(prev => prev === "asc" ? "desc" : "asc");
     } else {
-      setSortField(field);
-      setSortDirection("desc");
+      setSortFieldPos(field);
+      setSortDirPos("desc");
     }
   };
 
-  const tabelaOrdenada = useMemo(() => {
+  const handleSortPont = (field) => {
+    if (sortFieldPont === field) {
+      setSortDirPont(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortFieldPont(field);
+      setSortDirPont("desc");
+    }
+  };
+
+  const tabelaPosicaoOrdenada = useMemo(() => {
     const items = [...tabelaEvolucoes];
     items.sort((a, b) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
+      let valA = a[sortFieldPos];
+      let valB = b[sortFieldPos];
       
-      if (sortField === "nome") {
-        return sortDirection === "asc" 
-          ? valA.localeCompare(valB) 
-          : valB.localeCompare(valA);
+      if (sortFieldPos === "nome") {
+        return sortDirPos === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
       
-      // Trata nulos para ficar sempre abaixo na ordenação
-      if (valA === null) valA = sortDirection === "asc" ? Infinity : -Infinity;
-      if (valB === null) valB = sortDirection === "asc" ? Infinity : -Infinity;
+      if (valA === null) valA = sortDirPos === "asc" ? Infinity : -Infinity;
+      if (valB === null) valB = sortDirPos === "asc" ? Infinity : -Infinity;
       
-      return sortDirection === "asc" ? valA - valB : valB - valA;
+      return sortDirPos === "asc" ? valA - valB : valB - valA;
     });
     return items;
-  }, [tabelaEvolucoes, sortField, sortDirection]);
+  }, [tabelaEvolucoes, sortFieldPos, sortDirPos]);
+
+  const tabelaPontuacaoOrdenada = useMemo(() => {
+    const items = [...tabelaEvolucoes];
+    items.sort((a, b) => {
+      let valA = a[sortFieldPont];
+      let valB = b[sortFieldPont];
+      
+      if (sortFieldPont === "nome") {
+        return sortDirPont === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      }
+      
+      if (valA === null) valA = sortDirPont === "asc" ? Infinity : -Infinity;
+      if (valB === null) valB = sortDirPont === "asc" ? Infinity : -Infinity;
+      
+      return sortDirPont === "asc" ? valA - valB : valB - valA;
+    });
+    return items;
+  }, [tabelaEvolucoes, sortFieldPont, sortDirPont]);
 
   const toggleCidade = (nome) => {
     onCidadesSelecionadasChange(prev =>
@@ -269,10 +295,10 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
         </div>
       </div>
 
-      {/* Gráficos e Tabela */}
+      {/* Gráficos e Tabelas */}
       {cidadesSelecionadas.length === 0 ? (
         <p className="text-center text-gray-400 text-sm py-6">
-          Selecione ao menos um município para visualizar os gráficos e a tabela de evolução.
+          Selecione ao menos um município para visualizar os gráficos e as tabelas de evolução.
         </p>
       ) : (
         <>
@@ -287,86 +313,123 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
             cores={cores}
           />
 
-          {/* Tabela de Maiores Evoluções */}
-          <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b pb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800">Tabela de Evoluções no Período Selecionado</h3>
+          {/* Duas Tabelas de Maiores Evoluções */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            {/* Tabela de Evolução da Posição */}
+            <div className="bg-white border rounded-lg p-4 shadow-sm">
+              <div className="mb-3 border-b pb-2">
+                <h3 className="text-sm font-semibold text-gray-800">Evolução da Posição no Período</h3>
                 <p className="text-xs text-gray-500">
-                  Variação líquida do início ao fim do intervalo. Clique nas colunas com "▲/▼" para ordenar.
+                  Melhor colocação (1º em diante). Clique nas colunas para ordenar.
                 </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left text-gray-700">
+                  <thead className="text-xs uppercase bg-gray-50 text-gray-600 border-b">
+                    <tr>
+                      <th className="py-2 px-3 cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPos("nome")}>
+                        Município {sortFieldPos === "nome" ? (sortDirPos === "asc" ? "▲" : "▼") : ""}
+                      </th>
+                      <th className="py-2 px-3 text-center">Pos. Inicial</th>
+                      <th className="py-2 px-3 text-center">Pos. Final</th>
+                      <th className="py-2 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPos("varPos")}>
+                        Variação {sortFieldPos === "varPos" ? (sortDirPos === "asc" ? "▲" : "▼") : ""}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {tabelaPosicaoOrdenada.map(item => {
+                      const cor = cores[item.nome];
+                      
+                      let posText = "-";
+                      let posColor = "text-gray-500";
+                      if (item.varPos > 0) {
+                        posText = `▲ +${item.varPos} pos.`;
+                        posColor = "text-green-600 font-semibold";
+                      } else if (item.varPos < 0) {
+                        posText = `▼ ${item.varPos} pos.`;
+                        posColor = "text-red-600 font-semibold";
+                      } else if (item.posIni !== null) {
+                        posText = "=";
+                        posColor = "text-gray-500";
+                      }
+
+                      return (
+                        <tr key={item.nome} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-2 px-3 font-medium flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cor }} />
+                            {item.nome}
+                          </td>
+                          <td className="py-2 px-3 text-center">{item.posIni ? `${item.posIni}º` : "-"}</td>
+                          <td className="py-2 px-3 text-center">{item.posFin ? `${item.posFin}º` : "-"}</td>
+                          <td className={`py-2 px-3 text-center ${posColor}`}>{posText}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left text-gray-700">
-                <thead className="text-xs uppercase bg-gray-50 text-gray-600 border-b">
-                  <tr>
-                    <th className="py-2.5 px-3 cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSort("nome")}>
-                      Município {sortField === "nome" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
-                    </th>
-                    <th className="py-2.5 px-3 text-center">Pontuação Inicial</th>
-                    <th className="py-2.5 px-3 text-center">Pontuação Final</th>
-                    <th className="py-2.5 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSort("varPont")}>
-                      Variação Pontuação {sortField === "varPont" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
-                    </th>
-                    <th className="py-2.5 px-3 text-center">Pos. Inicial</th>
-                    <th className="py-2.5 px-3 text-center">Pos. Final</th>
-                    <th className="py-2.5 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSort("varPos")}>
-                      Variação Posição {sortField === "varPos" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {tabelaOrdenada.map(item => {
-                    const cor = cores[item.nome];
-                    
-                    // Formatação pontuação
-                    let pontText = "-";
-                    let pontColor = "text-gray-500";
-                    if (item.varPont > 0) {
-                      pontText = `▲ +${item.varPont.toFixed(1)}`;
-                      pontColor = "text-green-600 font-semibold";
-                    } else if (item.varPont < 0) {
-                      pontText = `▼ ${item.varPont.toFixed(1)}`;
-                      pontColor = "text-red-600 font-semibold";
-                    } else if (item.pIni !== null) {
-                      pontText = "0.0";
-                      pontColor = "text-gray-500";
-                    }
+            {/* Tabela de Evolução da Pontuação */}
+            <div className="bg-white border rounded-lg p-4 shadow-sm">
+              <div className="mb-3 border-b pb-2">
+                <h3 className="text-sm font-semibold text-gray-800">Evolução da Pontuação no Período</h3>
+                <p className="text-xs text-gray-500">
+                  Total de pontos ganhos ou perdidos. Clique nas colunas para ordenar.
+                </p>
+              </div>
 
-                    // Formatação posição
-                    let posText = "-";
-                    let posColor = "text-gray-500";
-                    if (item.varPos > 0) {
-                      posText = `▲ +${item.varPos} pos.`;
-                      posColor = "text-green-600 font-semibold";
-                    } else if (item.varPos < 0) {
-                      posText = `▼ ${item.varPos} pos.`;
-                      posColor = "text-red-600 font-semibold";
-                    } else if (item.posIni !== null) {
-                      posText = "=";
-                      posColor = "text-gray-500";
-                    }
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left text-gray-700">
+                  <thead className="text-xs uppercase bg-gray-50 text-gray-600 border-b">
+                    <tr>
+                      <th className="py-2 px-3 cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPont("nome")}>
+                        Município {sortFieldPont === "nome" ? (sortDirPont === "asc" ? "▲" : "▼") : ""}
+                      </th>
+                      <th className="py-2 px-3 text-center">Pontos Inicial</th>
+                      <th className="py-2 px-3 text-center">Pontos Final</th>
+                      <th className="py-2 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPont("varPont")}>
+                        Variação {sortFieldPont === "varPont" ? (sortDirPont === "asc" ? "▲" : "▼") : ""}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {tabelaPontuacaoOrdenada.map(item => {
+                      const cor = cores[item.nome];
+                      
+                      let pontText = "-";
+                      let pontColor = "text-gray-500";
+                      if (item.varPont > 0) {
+                        pontText = `▲ +${item.varPont.toFixed(1)}`;
+                        pontColor = "text-green-600 font-semibold";
+                      } else if (item.varPont < 0) {
+                        pontText = `▼ ${item.varPont.toFixed(1)}`;
+                        pontColor = "text-red-600 font-semibold";
+                      } else if (item.pIni !== null) {
+                        pontText = "0.0";
+                        pontColor = "text-gray-500";
+                      }
 
-                    return (
-                      <tr key={item.nome} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 px-3 font-medium flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cor }} />
-                          {item.nome}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">{item.pIni !== null ? item.pIni.toFixed(1) : "-"}</td>
-                        <td className="py-2.5 px-3 text-center">{item.pFin !== null ? item.pFin.toFixed(1) : "-"}</td>
-                        <td className={`py-2.5 px-3 text-center ${pontColor}`}>{pontText}</td>
-                        <td className="py-2.5 px-3 text-center">{item.posIni ? `${item.posIni}º` : "-"}</td>
-                        <td className="py-2.5 px-3 text-center">{item.posFin ? `${item.posFin}º` : "-"}</td>
-                        <td className={`py-2.5 px-3 text-center ${posColor}`}>{posText}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      return (
+                        <tr key={item.nome} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-2 px-3 font-medium flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cor }} />
+                            {item.nome}
+                          </td>
+                          <td className="py-2 px-3 text-center">{item.pIni !== null ? item.pIni.toFixed(1) : "-"}</td>
+                          <td className="py-2 px-3 text-center">{item.pFin !== null ? item.pFin.toFixed(1) : "-"}</td>
+                          <td className={`py-2 px-3 text-center ${pontColor}`}>{pontText}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
           </div>
         </>
       )}
