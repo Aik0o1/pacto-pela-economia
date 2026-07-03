@@ -104,13 +104,19 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
           const linhas = cidadesSelecionadas
             .map(c => {
               const ponto = (dadosPorCidade[c] || []).find(p => p.label === d.label);
-              if (!ponto || !ponto.posicao) return null;
+              return {
+                cidade: c,
+                posicao: ponto ? ponto.posicao : null
+              };
+            })
+            .filter(item => item.posicao !== null && item.posicao !== undefined)
+            .sort((a, b) => a.posicao - b.posicao)
+            .map(item => {
               return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
-                <span style="color:${cores[c] || '#999'};font-size:10px">●</span>
-                <span style="color:#374151">${c}: <strong>${ponto.posicao}º lugar</strong></span>
+                <span style="color:${cores[item.cidade] || '#999'};font-size:10px">●</span>
+                <span style="color:#374151">${item.cidade}: <strong>${item.posicao}º lugar</strong></span>
               </div>`;
             })
-            .filter(Boolean)
             .join("");
 
           tooltip

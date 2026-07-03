@@ -103,13 +103,19 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
           const linhas = cidadesSelecionadas
             .map(c => {
               const ponto = (dadosPorCidade[c] || []).find(x => x.label === d.label);
-              if (!ponto) return null;
+              return {
+                cidade: c,
+                pontuacao: ponto ? ponto.pontuacao_total : null
+              };
+            })
+            .filter(item => item.pontuacao !== null && item.pontuacao !== undefined)
+            .sort((a, b) => b.pontuacao - a.pontuacao)
+            .map(item => {
               return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
-                <span style="color:${cores[c] || '#999'};font-size:10px">●</span>
-                <span style="color:#374151">${c}: <strong>${ponto.pontuacao_total}</strong></span>
+                <span style="color:${cores[item.cidade] || '#999'};font-size:10px">●</span>
+                <span style="color:#374151">${item.cidade}: <strong>${item.pontuacao}</strong></span>
               </div>`;
             })
-            .filter(Boolean)
             .join("");
 
           tooltip
