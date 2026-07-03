@@ -151,8 +151,8 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
       const first = ordenados[0];
       const last = ordenados[ordenados.length - 1];
       
-      const pIni = first.pontuacao_total ?? 0;
-      const pFin = last.pontuacao_total ?? 0;
+      const pIni = Math.round(first.pontuacao_total ?? 0);
+      const pFin = Math.round(last.pontuacao_total ?? 0);
       const varPont = pFin - pIni;
       
       const posIni = first.posicao ?? null;
@@ -417,13 +417,13 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
                       let pontText = "-";
                       let pontColor = "text-gray-500";
                       if (item.varPont > 0) {
-                        pontText = `▲ +${item.varPont.toFixed(1)}`;
+                        pontText = `▲ +${item.varPont}`;
                         pontColor = "text-green-600 font-semibold";
                       } else if (item.varPont < 0) {
-                        pontText = `▼ ${item.varPont.toFixed(1)}`;
+                        pontText = `▼ ${item.varPont}`;
                         pontColor = "text-red-600 font-semibold";
                       } else if (item.pIni !== null) {
-                        pontText = "0.0";
+                        pontText = "0";
                         pontColor = "text-gray-500";
                       }
 
@@ -433,8 +433,8 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
                             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cor }} />
                             {item.nome}
                           </td>
-                          <td className="py-2 px-3 text-center">{item.pIni !== null ? item.pIni.toFixed(1) : "-"}</td>
-                          <td className="py-2 px-3 text-center">{item.pFin !== null ? item.pFin.toFixed(1) : "-"}</td>
+                          <td className="py-2 px-3 text-center">{item.pIni !== null ? item.pIni : "-"}</td>
+                          <td className="py-2 px-3 text-center">{item.pFin !== null ? item.pFin : "-"}</td>
                           <td className={`py-2 px-3 text-center ${pontColor}`}>{pontText}</td>
                         </tr>
                       );
