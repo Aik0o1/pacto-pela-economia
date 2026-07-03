@@ -243,6 +243,9 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
     );
   }
 
+  const labelInicio = periodoInicio ? ` (${formatarPeriodo(periodoInicio).toLowerCase()})` : "";
+  const labelFim = periodoFim ? ` (${formatarPeriodo(periodoFim).toLowerCase()})` : "";
+
   return (
     <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px] space-y-6">
 
@@ -349,8 +352,12 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
                       <th className="py-2 px-3 cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPos("nome")}>
                         Município {sortFieldPos === "nome" ? (sortDirPos === "asc" ? "▲" : "▼") : ""}
                       </th>
-                      <th className="py-2 px-3 text-center">Pos. Inicial</th>
-                      <th className="py-2 px-3 text-center">Pos. Final</th>
+                      <th className="py-2 px-3 text-center">
+                        Pos. Inicial <span className="normal-case font-normal text-gray-500">{labelInicio}</span>
+                      </th>
+                      <th className="py-2 px-3 text-center">
+                        Pos. Final <span className="normal-case font-normal text-gray-500">{labelFim}</span>
+                      </th>
                       <th className="py-2 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPos("varPos")}>
                         Variação {sortFieldPos === "varPos" ? (sortDirPos === "asc" ? "▲" : "▼") : ""}
                       </th>
@@ -408,8 +415,12 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
                       <th className="py-2 px-3 cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPont("nome")}>
                         Município {sortFieldPont === "nome" ? (sortDirPont === "asc" ? "▲" : "▼") : ""}
                       </th>
-                      <th className="py-2 px-3 text-center">Pontos Inicial</th>
-                      <th className="py-2 px-3 text-center">Pontos Final</th>
+                      <th className="py-2 px-3 text-center">
+                        Pontos Inicial <span className="normal-case font-normal text-gray-500">{labelInicio}</span>
+                      </th>
+                      <th className="py-2 px-3 text-center">
+                        Pontos Final <span className="normal-case font-normal text-gray-500">{labelFim}</span>
+                      </th>
                       <th className="py-2 px-3 text-center cursor-pointer select-none hover:bg-gray-100 transition-colors" onClick={() => handleSortPont("varPont")}>
                         Variação {sortFieldPont === "varPont" ? (sortDirPont === "asc" ? "▲" : "▼") : ""}
                       </th>
