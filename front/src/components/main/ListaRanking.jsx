@@ -96,18 +96,17 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
 
   // Buscar primeiro lugar quando mes/ano mudarem
   useEffect(() => {
+    let active = true;
     const controller = new AbortController();
     const signal = controller.signal;
     const fetchData = async () => {
-      // Usando um AbortController para limpeza
-
       try {
         setLoading(true); // Inicia o carregamento
         setDados(null); // Limpa dados antigos
 
         const numero_mes = meses[mes];
         if (!numero_mes || !ano) {
-          setLoading(false);
+          if (active) setLoading(false);
           return; // Sai se não tiver mês ou ano
         }
 
@@ -124,7 +123,12 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
             headers: { Authorization: `Bearer ${apiToken}` },
             signal,
           });
+          
+          if (!active) return;
+          
           const data = await response.json();
+
+          if (!active) return;
 
           if (!response.ok || !data.metricas) {
             setDados(null);
@@ -133,14 +137,19 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           }
           // Se NENHUMA cidade foi selecionada, busca o primeiro do ranking
         } else {
-          setPrimeiroCidade("Carregando...");
+          if (active) setPrimeiroCidade("Carregando...");
           const url = `${apiUrl}/ranking/primeiro?mes=${numero_mes}&ano=${ano}`;
           const response = await fetch(url, {
             method: "GET",
             headers: { Authorization: `Bearer ${apiToken}` },
             signal,
           });
+          
+          if (!active) return;
+          
           const data = await response.json();
+
+          if (!active) return;
 
           if (!response.ok || !data.metricas) {
             setDados(null);
@@ -151,21 +160,23 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
           }
         }
       } catch (err) {
-        console.log(err);
-
-        if (err.name !== "AbortError") {
+        if (err.name !== "AbortError" && active) {
+          console.log(err);
           setError(err.message);
           setDados(null);
           setPrimeiroCidade("Erro");
         }
       } finally {
-        setLoading(false); // Finaliza o carregamento
+        if (active) {
+          setLoading(false); // Finaliza o carregamento
+        }
       }
     };
 
     fetchData();
 
     return () => {
+      active = false;
       controller.abort();
     };
   }, [onCidadeSelecionada, mes, ano]);
@@ -220,7 +231,15 @@ export default function ListaRanking({ onCidadeSelecionada, mes, ano }) {
     (dados?.tempos_analise?.pontuacao || 0);
 
   return (
-    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md">
+    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px]">
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 rounded-lg transition-all duration-300">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando dados de Ranking ({municipio})...</p>
+          </div>
+        </div>
+      )}
       <div className="space-y-4">
         {/* Nome do município */}
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

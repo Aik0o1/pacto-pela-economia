@@ -14,6 +14,7 @@ import HierarchicalTreeMap from "../graphs/treeMap";
 
 export default function ListaAtivas({ onCidadeSelecionada }) {
   const [dados, setDados] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -35,7 +36,12 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchData = async () => {
+      setLoading(true);
       try {
         const id = onCidadeSelecionada?.id || "22";
 
@@ -46,8 +52,11 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
             Authorization: `Bearer ${apiToken}`,
             "Content-Type": "application/json",
           },
+          signal,
         });
         const { ano, mes } = await resDataRecente.json();
+
+        if (!active) return;
 
         const isPiaui = id === "22" || id === "";
         const isTerritorio = String(id).startsWith("territorio:");
@@ -64,6 +73,7 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
           fetch(url_ativas, {
             method: "GET",
             headers: { Authorization: `Bearer ${apiToken}` },
+            signal,
           })
         ];
 
@@ -71,16 +81,21 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
           promises.push(fetch(urlRanking, {
             method: "GET",
             headers: { Authorization: `Bearer ${apiToken}` },
+            signal,
           }));
         }
 
         const [response, resRanking] = await Promise.all(promises);
+
+        if (!active) return;
 
         const data = await response.json();
         let dataRanking = null;
         if (resRanking) {
           dataRanking = await resRanking.json();
         }
+
+        if (!active) return;
 
         if (response.ok && data.metricas) {
           const m = data.metricas;
@@ -140,11 +155,21 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
           setSelectedCity(onCidadeSelecionada.id);
         }
       } catch (error) {
-        console.error("Erro ao buscar dados do servidor:", error);
+        if (error.name !== "AbortError" && active) {
+          console.error("Erro ao buscar dados do servidor:", error);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [onCidadeSelecionada]);
 
   // if (loading) {
@@ -225,7 +250,7 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
 
   // Determina o nome do município baseado no tipo de dados
   const municipio =
-    onCidadeSelecionada.nome === "Selecione uma localidade"
+    onCidadeSelecionada.nome === "Selecione uma localidade" || onCidadeSelecionada.nome === "Piauí"
       ? "Municípios Pacto pela Economia"
       : onCidadeSelecionada.nome;
 
@@ -267,7 +292,15 @@ export default function ListaAtivas({ onCidadeSelecionada }) {
   // Verifica se há dados válidos para exibir gráficos
 
   return (
-    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md">
+    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px]">
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 rounded-lg transition-all duration-300">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando dados de Empresas Ativas em {municipio}...</p>
+          </div>
+        </div>
+      )}
       <ul className="space-y-4">
         <li>
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

@@ -13,6 +13,7 @@ import {
 import HierarchicalTreeMap from "../graphs/treeMap";
 export default function Lista({ onCidadeSelecionada, mes, ano }) {
   const [dados, setDados] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const apiUrl = import.meta.env.VITE_URL_API;
   const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -50,7 +51,12 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchData = async () => {
+      setLoading(true);
       try {
         const id = onCidadeSelecionada?.id || "22";
         const numero_mes = meses[mes];
@@ -69,20 +75,25 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
           : null;
 
         const promises = [
-          fetch(urlAbertas, { headers: { Authorization: `Bearer ${apiToken}` } })
+          fetch(urlAbertas, { headers: { Authorization: `Bearer ${apiToken}` }, signal })
         ];
         
         if (urlRanking) {
-          promises.push(fetch(urlRanking, { headers: { Authorization: `Bearer ${apiToken}` } }));
+          promises.push(fetch(urlRanking, { headers: { Authorization: `Bearer ${apiToken}` }, signal }));
         }
 
         const responses = await Promise.all(promises);
+        
+        if (!active) return;
+
         const dataAbertas = await responses[0].json();
         
         let dataRanking = null;
         if (urlRanking) {
           dataRanking = await responses[1].json();
         }
+
+        if (!active) return;
 
         if (responses[0].ok && dataAbertas.metricas) {
           const m = dataAbertas.metricas;
@@ -142,13 +153,23 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
           setRanking([]);
         }
       } catch (error) {
-        console.error("Erro ao buscar dados:", error);
+        if (error.name !== "AbortError" && active) {
+          console.error("Erro ao buscar dados:", error);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
     fetchData();
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [onCidadeSelecionada, mes, ano]);
   const municipio =
-    onCidadeSelecionada.nome == "Selecione uma localidade"
+    onCidadeSelecionada.nome == "Selecione uma localidade" || onCidadeSelecionada.nome == "Piauí"
       ? "Municípios Pacto pela Economia"
       : onCidadeSelecionada.nome;
 
@@ -272,7 +293,15 @@ export default function Lista({ onCidadeSelecionada, mes, ano }) {
   // const qtd_abertas = totalAbertas ? totalAbertas : "-";
 
   return (
-    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md">
+    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px]">
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 rounded-lg transition-all duration-300">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 border-4 border-[#034ea2] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold text-[#034ea2] animate-pulse">Carregando dados de empresas Abertas em {municipio}...</p>
+          </div>
+        </div>
+      )}
       <ul className="space-y-4">
         <li>
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
