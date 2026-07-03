@@ -42,10 +42,13 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
     const maxPos = allPositions.length > 0 ? Math.max(...allPositions) : 12;
 
     const x = d3.scalePoint().domain(todosLabels).range([0, W]).padding(0.5);
-    const y = d3.scaleLinear().domain([maxPos + 0.5, 0.5]).range([H, 0]);
+    const y = d3.scaleLinear().domain([224, 1]).range([H, 0]);
+
+    // Ticks fixos e legíveis para as posições de 1 a 224
+    const ticksY = [1, 50, 100, 150, 200, 224];
 
     g.selectAll(".grid-line")
-      .data(d3.range(1, maxPos + 1))
+      .data(ticksY)
       .enter().append("line")
       .attr("class", "grid-line")
       .attr("x1", 0).attr("x2", W)
@@ -63,6 +66,12 @@ export default function GraficoComparativoPosicao({ dadosPorCidade, cidadesSelec
       .attr("dx", isMobile ? "-0.8em" : "0")
       .attr("transform", isMobile ? "rotate(-40)" : null)
       .style("text-anchor", isMobile ? "end" : "middle");
+
+    // Eixo Y
+    g.append("g")
+      .call(d3.axisLeft(y).tickValues(ticksY).tickFormat(d => `${d}º`).tickSize(0))
+      .call(ax => ax.select(".domain").remove())
+      .selectAll("text").style("font-size", "10px").style("fill", "#6b7280");
 
    
     const tooltip = d3.select(tooltipRef.current);

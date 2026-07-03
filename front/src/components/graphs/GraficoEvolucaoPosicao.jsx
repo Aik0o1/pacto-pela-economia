@@ -11,7 +11,7 @@ export default function GraficoEvolucaoPosicao({ dados }) {
     const totalWidth = containerRef.current.clientWidth;
     const isMobile = totalWidth < 400;
     const height = 230;
-    const margin = { top: 28, right: 20, bottom: isMobile ? 60 : 44, left: 40 };
+    const margin = { top: 28, right: 20, bottom: isMobile ? 60 : 44, left: 44 };
     const W = totalWidth - margin.left - margin.right;
     const H = height - margin.top - margin.bottom;
 
@@ -28,15 +28,17 @@ export default function GraficoEvolucaoPosicao({ dados }) {
       .range([0, W])
       .padding(0.5);
 
-    // Y invertido: posição 1 fica no topo (melhor)
+    // Y invertido: posição 1 fica no topo (melhor), domínio de 1 a 224
     const y = d3.scaleLinear()
-      .domain([maxPos + 0.5, 0.5])
+      .domain([224, 1])
       .range([H, 0]);
 
+    // Ticks fixos e legíveis para as posições
+    const ticksY = [1, 50, 100, 150, 200, 224];
+
     // Grade horizontal
-    const ticks = d3.range(1, maxPos + 1);
     g.selectAll(".grid-line")
-      .data(ticks)
+      .data(ticksY)
       .enter()
       .append("line")
       .attr("class", "grid-line")
@@ -57,6 +59,14 @@ export default function GraficoEvolucaoPosicao({ dados }) {
       .attr("dx", isMobile ? "-0.8em" : "0")
       .attr("transform", isMobile ? "rotate(-40)" : null)
       .style("text-anchor", isMobile ? "end" : "middle");
+
+    // Eixo Y
+    g.append("g")
+      .call(d3.axisLeft(y).tickValues(ticksY).tickFormat(d => `${d}º`).tickSize(0))
+      .call((ax) => ax.select(".domain").remove())
+      .selectAll("text")
+      .style("font-size", "10px")
+      .style("fill", "#6b7280");
 
     // Linha de evolução
     if (dados.length > 1) {
