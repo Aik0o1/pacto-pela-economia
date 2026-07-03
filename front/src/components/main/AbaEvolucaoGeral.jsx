@@ -244,10 +244,10 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
   }
 
   return (
-    <div className="space-y-4">
+    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px] space-y-6">
 
       {/* Seletor de municípios */}
-      <div className="bg-white border rounded-lg p-4">
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-medium text-gray-700">
             Municípios{" "}
@@ -307,9 +307,11 @@ export default function AbaEvolucaoGeral({ periodoInicio, periodoFim, onPeriodos
 
       {/* Gráficos e Tabelas */}
       {cidadesSelecionadas.length === 0 ? (
-        <p className="text-center text-gray-400 text-sm py-6">
-          Selecione ao menos um município para visualizar os gráficos e as tabelas de evolução.
-        </p>
+        <div className="flex items-center justify-center min-h-[150px] border border-dashed rounded-lg border-gray-200 bg-gray-50">
+          <p className="text-center text-gray-400 text-sm">
+            Selecione ao menos um município para visualizar os gráficos e as tabelas de evolução.
+          </p>
+        </div>
       ) : (
         <>
           <GraficoComparativoPosicao

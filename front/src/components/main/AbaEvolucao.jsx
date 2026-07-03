@@ -180,14 +180,16 @@ export default function AbaEvolucao({
 
   if (!cidadeEfetiva) {
     return (
-      <p className="text-center text-gray-400 text-sm py-10">
-        Selecione um município para visualizar a evolução do ranking.
-      </p>
+      <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md min-h-[150px] flex items-center justify-center">
+        <p className="text-center text-gray-400 text-sm">
+          Selecione um município para visualizar a evolução do ranking.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="informacoes-municipais p-6 bg-white rounded-lg shadow-md relative min-h-[300px] space-y-6">
 
       {/* Cidade exibida */}
       <div className="flex flex-wrap items-center gap-3 px-1">
@@ -253,8 +255,8 @@ export default function AbaEvolucao({
             </div>
           </div>
 
-          <GraficoEvolucao dados={dadosFiltrados} />
           <GraficoEvolucaoPosicao dados={dadosFiltrados} />
+          <GraficoEvolucao dados={dadosFiltrados} />
           <GraficoSolicitacoes dados={dadosFiltrados} />
           <GraficoTempos dados={dadosFiltrados} />
         </>
