@@ -120,16 +120,40 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
             );
 
           const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
-          const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
+          const tooltipHeight = tooltipRef.current ? tooltipRef.current.offsetHeight : 80;
+
+          let leftPosition = mx + 14;
+          if (leftPosition + tooltipWidth > totalWidth) {
+            leftPosition = mx - tooltipWidth - 14;
+          }
+          if (leftPosition < 4) leftPosition = 4;
+
+          let topPosition = my - tooltipHeight - 14;
+          if (topPosition < 4) {
+            topPosition = my + 14;
+          }
+
           tooltip
             .style("left", `${leftPosition}px`)
-            .style("top", `${my - 10}px`);
+            .style("top", `${topPosition}px`);
         })
         .on("mousemove", function(event) {
           const [mx, my] = d3.pointer(event, containerRef.current);
           const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
-          const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
-          tooltip.style("left", `${leftPosition}px`).style("top", `${my - 10}px`);
+          const tooltipHeight = tooltipRef.current ? tooltipRef.current.offsetHeight : 80;
+
+          let leftPosition = mx + 14;
+          if (leftPosition + tooltipWidth > totalWidth) {
+            leftPosition = mx - tooltipWidth - 14;
+          }
+          if (leftPosition < 4) leftPosition = 4;
+
+          let topPosition = my - tooltipHeight - 14;
+          if (topPosition < 4) {
+            topPosition = my + 14;
+          }
+
+          tooltip.style("left", `${leftPosition}px`).style("top", `${topPosition}px`);
         })
         .on("mouseout", function() {
           d3.select(this).attr("r", 5);
@@ -150,7 +174,7 @@ export default function GraficoComparativoPontuacao({ dadosPorCidade, cidadesSel
   return (
     <div className="border rounded-lg p-4">
       <p className="text-sm font-medium text-[#231f20] mb-3">Evolução Comparativa da Pontuação</p>
-      <div ref={containerRef} className="w-full overflow-hidden relative">
+      <div ref={containerRef} className="w-full relative">
         <svg ref={svgRef} className="w-full" />
         <div
           ref={tooltipRef}

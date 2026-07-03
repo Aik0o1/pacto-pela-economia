@@ -137,7 +137,10 @@ export default function GraficoTempos({ dados }) {
         const val = toHoras(d.tempos_detalhes?.[cat]);
         if (val === null) return;
 
+        const classSafe = d.label.replace(/[^a-zA-Z0-9]/g, "");
+
         g.append("circle")
+          .attr("class", `circle-${classSafe}`)
           .attr("cx", x(d.label))
           .attr("cy", y(val))
           .attr("r", 5)
@@ -146,23 +149,71 @@ export default function GraficoTempos({ dados }) {
           .attr("stroke-width", 1.5)
           .style("cursor", "pointer")
           .on("mouseover", function (event) {
-            d3.select(this).attr("r", 7);
+            g.selectAll(`.circle-${classSafe}`).attr("r", 7);
             const [mx, my] = d3.pointer(event, containerRef.current);
+            
+            const linhas = categoriasAtivas
+              .map(c => {
+                const tempoRaw = d.tempos_detalhes?.[c];
+                const valorHoras = toHoras(tempoRaw);
+                if (valorHoras === null) return null;
+                return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+                  <span style="color:${DOC_COLORS[c]};font-size:10px">●</span>
+                  <span style="color:#374151">${DOC_LABELS[c]}: <strong>${formatLabel(valorHoras)}</strong></span>
+                </div>`;
+              })
+              .filter(Boolean)
+              .join("");
+
             tooltip
               .style("display", "block")
               .html(
-                `<div style="font-weight:600;margin-bottom:3px;color:#374151">${d.label}</div>` +
-                `<div style="color:${color}">${DOC_LABELS[cat]}: <strong>${formatLabel(val)}</strong></div>`
+                `<div style="font-weight:600;color:#4b5563;margin-bottom:4px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">${d.label}</div>` +
+                `<div style="max-height:150px;overflow-y:auto;padding-right:4px">${linhas}</div>`
               );
 
-            const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 150;
-            const leftPosition = mx + tooltipWidth + 20 > totalWidth ? mx - tooltipWidth - 14 : mx + 14;
+            const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
+            const tooltipHeight = tooltipRef.current ? tooltipRef.current.offsetHeight : 120;
+            
+            let leftPosition = mx + 14;
+            if (leftPosition + tooltipWidth > totalWidth) {
+              leftPosition = mx - tooltipWidth - 14;
+            }
+            if (leftPosition < 0) leftPosition = 4;
+
+            let topPosition = my - 10;
+            if (topPosition + tooltipHeight > height) {
+              topPosition = height - tooltipHeight - 10;
+            }
+            if (topPosition < 0) topPosition = 10;
+
             tooltip
               .style("left", `${leftPosition}px`)
-              .style("top", `${my - 36}px`);
+              .style("top", `${topPosition}px`);
+          })
+          .on("mousemove", function (event) {
+            const [mx, my] = d3.pointer(event, containerRef.current);
+            const tooltipWidth = tooltipRef.current ? tooltipRef.current.offsetWidth : 180;
+            const tooltipHeight = tooltipRef.current ? tooltipRef.current.offsetHeight : 120;
+
+            let leftPosition = mx + 14;
+            if (leftPosition + tooltipWidth > totalWidth) {
+              leftPosition = mx - tooltipWidth - 14;
+            }
+            if (leftPosition < 0) leftPosition = 4;
+
+            let topPosition = my - 10;
+            if (topPosition + tooltipHeight > height) {
+              topPosition = height - tooltipHeight - 10;
+            }
+            if (topPosition < 0) topPosition = 10;
+
+            tooltip
+              .style("left", `${leftPosition}px`)
+              .style("top", `${topPosition}px`);
           })
           .on("mouseout", function () {
-            d3.select(this).attr("r", 5);
+            g.selectAll(`.circle-${classSafe}`).attr("r", 5);
             tooltip.style("display", "none");
           });
       });
@@ -211,7 +262,7 @@ export default function GraficoTempos({ dados }) {
       <p className="text-sm font-medium text-[#231f20] mb-3">
         Evolução dos Tempos de Análise
       </p>
-      <div ref={containerRef} className="w-full overflow-hidden relative">
+      <div ref={containerRef} className="w-full relative">
         <svg ref={svgRef} className="w-full" />
         <div
           ref={tooltipRef}
