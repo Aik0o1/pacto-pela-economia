@@ -6,7 +6,6 @@ import Header from './components/main/Header';
 import Footer from './components/main/Footer';
 import PiauiMapa from './components/main/Mapa';
 import Filtros from './components/main/Filtros';
-import LoginPage from './components/main/LoginPage';
 
 function MainContent() {
   const [cidade, setCidade] = useState({ nome: 'Selecione uma localidade', id: '' });
@@ -177,14 +176,6 @@ function MainContent() {
 }
 
 function App() {
-  const [autenticado, setAutenticado] = useState(
-    () => sessionStorage.getItem("autenticado") === "1"
-  );
-
-  if (!autenticado) {
-    return <LoginPage onLogin={() => setAutenticado(true)} />;
-  }
-
   return <MainContent />;
 }
 
